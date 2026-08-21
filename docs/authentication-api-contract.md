@@ -12,6 +12,8 @@ The Week 1 authentication goal is to support the basic end-to-end login flow:
 5. The JWT can be used to access a basic protected endpoint/page.
 6. Invalid credentials result in an appropriate authentication error.
 
+The currently planned application roles are Administrator, Coach, Player, and Parent. These roles are identified for the application data model, but detailed role-specific authorization rules are outside the Week 1 authentication scope and will be defined or refined in Week 2.
+
 Full role-based authorization (RBAC) is outside the scope of this initial Week 1 API contract and will be refined in Week 2.
 
 ## Base API Path
