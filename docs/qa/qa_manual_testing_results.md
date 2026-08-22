@@ -1,5 +1,7 @@
 # Manual Testing Results - Sprint 1
 
+**Verification Note:** The manual test cases documented below were subsequently executed and verified by the development team. The listed results reflect the confirmed behavior observed during testing.
+
 | Test Case ID | Feature Description | Status | Notes / Observations |
 | :--- | :--- | :--- | :--- |
 | **TC-01** | Valid User Login | **PASSED** | Credentials validated via JWT; user redirected to role dashboard. |
