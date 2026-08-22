@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-labelledby="title desc">
+  <title id="title">Sports Team Management login — mobile design reference</title>
+  <desc id="desc">A responsive mobile authentication screen with a compact brand header and login card.</desc>
+  <defs>
+    <linearGradient id="mobileGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#122F4D"/>
+      <stop offset="1" stop-color="#0A2239"/>
+    </linearGradient>
+    <filter id="mobileShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#19324D" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <g id="Board/Mobile-390">
+    <rect width="390" height="844" fill="#F8FAFC"/>
+    <rect width="390" height="330" fill="url(#mobileGradient)"/>
+    <circle cx="390" cy="330" r="170" fill="none" stroke="#FFFFFF" stroke-opacity="0.10"/>
+
+    <g id="Brand/Lockup-Mobile" transform="translate(22 22)">
+      <rect width="38" height="38" rx="11" fill="#2DC58D"/>
+      <path d="M9 12 19 6l10 6v15l-10 6-10-6V12Z" fill="none" stroke="#0A2239" stroke-width="2"/>
+      <path d="m13 23 3-6 4 4 5-7" fill="none" stroke="#0A2239" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="50" y="16" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="0.9">SPORTS TEAM</text>
+      <text x="50" y="31" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="0.9">MANAGEMENT</text>
+    </g>
+
+    <g id="Brand/Message-Mobile" transform="translate(22 112)">
+      <text fill="#87E0BF" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="1.4">TEAM OPERATIONS, SIMPLIFIED</text>
+      <text y="58" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="750" letter-spacing="-2">Lead every</text>
+      <text y="102" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="750" letter-spacing="-2">play.</text>
+      <text y="136" fill="#C5D3DF" font-family="Inter, Arial, sans-serif" font-size="13">One workspace for the decisions that move</text>
+      <text y="157" fill="#C5D3DF" font-family="Inter, Arial, sans-serif" font-size="13">your team forward.</text>
+    </g>
+
+    <g id="Card/Login-Mobile" transform="translate(16 252)" filter="url(#mobileShadow)">
+      <rect width="358" height="544" rx="18" fill="#FFFFFF" stroke="#DCE4EA"/>
+      <text x="24" y="38" fill="#0878C9" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="800" letter-spacing="1.7">SECURE ACCESS</text>
+      <text x="24" y="80" fill="#111B2E" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="750" letter-spacing="-1">Welcome back</text>
+      <text x="24" y="108" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="12">Enter your details to access your team workspace.</text>
+
+      <g id="Field/Identifier-Mobile" transform="translate(24 146)">
+        <text y="12" fill="#26394E" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">Username or email</text>
+        <rect y="26" width="310" height="52" rx="10" fill="#FBFCFD" stroke="#D9E0E8"/>
+        <text x="14" y="58" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="13">name@team.com</text>
+      </g>
+
+      <g id="Field/Password-Mobile" transform="translate(24 252)">
+        <text y="12" fill="#26394E" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700">Password</text>
+        <rect y="26" width="310" height="52" rx="10" fill="#FBFCFD" stroke="#D9E0E8"/>
+        <text x="14" y="58" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="13">Enter your password</text>
+      </g>
+
+      <g id="Button/Primary-Mobile" transform="translate(24 370)">
+        <rect width="310" height="54" rx="10" fill="#0878C9"/>
+        <text x="16" y="33" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Sign in to workspace</text>
+        <path d="M274 27h13m-5-5 5 5-5 5" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <text x="179" y="476" text-anchor="middle" fill="#8591A0" font-family="Inter, Arial, sans-serif" font-size="10">Account access is managed by your team administrator.</text>
+      <text x="179" y="516" text-anchor="middle" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="9">Mobile board · 390 × 844</text>
+    </g>
+  </g>
+</svg>
