@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Vite cache
+.vite/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+.env.*
