@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Sports Team Management login — desktop design reference</title>
+  <desc id="desc">A two-panel authentication screen with a navy brand panel and a white login card.</desc>
+  <defs>
+    <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#122F4D"/>
+      <stop offset="1" stop-color="#0A2239"/>
+    </linearGradient>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#0878C9" stroke-opacity="0.06"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#19324D" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <g id="Board/Desktop-1440">
+    <rect width="1440" height="900" fill="#F8FAFC"/>
+    <rect x="0" y="0" width="620" height="900" fill="url(#brandGradient)"/>
+    <rect x="620" y="0" width="820" height="900" fill="url(#grid)"/>
+    <circle cx="700" cy="780" r="370" fill="none" stroke="#FFFFFF" stroke-opacity="0.08"/>
+    <circle cx="700" cy="780" r="160" fill="none" stroke="#FFFFFF" stroke-opacity="0.10"/>
+
+    <g id="Brand/Lockup" transform="translate(64 58)">
+      <rect width="44" height="44" rx="13" fill="#2DC58D"/>
+      <path d="M10 13 22 6l12 7v18l-12 7-12-7V13Z" fill="none" stroke="#0A2239" stroke-width="2.4"/>
+      <path d="m15 26 4-7 4 5 6-8" fill="none" stroke="#0A2239" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="60" y="19" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1">SPORTS TEAM</text>
+      <text x="60" y="37" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.1">MANAGEMENT</text>
+    </g>
+
+    <g id="Brand/Message" transform="translate(64 298)">
+      <rect x="0" y="5" width="36" height="2" fill="#2DC58D"/>
+      <text x="49" y="12" fill="#87E0BF" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2">TEAM OPERATIONS, SIMPLIFIED</text>
+      <text x="0" y="102" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="750" letter-spacing="-3">Lead every</text>
+      <text x="0" y="176" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="750" letter-spacing="-3">play.</text>
+      <text x="0" y="228" fill="#C5D3DF" font-family="Inter, Arial, sans-serif" font-size="16">One focused workspace for rosters, schedules,</text>
+      <text x="0" y="256" fill="#C5D3DF" font-family="Inter, Arial, sans-serif" font-size="16">attendance, and the decisions that keep your team</text>
+      <text x="0" y="284" fill="#C5D3DF" font-family="Inter, Arial, sans-serif" font-size="16">moving forward.</text>
+    </g>
+
+    <g id="Brand/Footer" transform="translate(64 822)">
+      <circle cx="6" cy="6" r="5" fill="#2DC58D"/>
+      <circle cx="6" cy="6" r="11" fill="#2DC58D" fill-opacity="0.12"/>
+      <text x="26" y="11" fill="#9FB1C1" font-family="Inter, Arial, sans-serif" font-size="12">Sports Team Management · Secure team workspace</text>
+    </g>
+
+    <g id="Card/Login" transform="translate(810 170)" filter="url(#shadow)">
+      <rect width="470" height="560" rx="20" fill="#FFFFFF" stroke="#DCE4EA"/>
+      <g id="Card/Header" transform="translate(42 42)">
+        <text fill="#0878C9" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="800" letter-spacing="2">SECURE ACCESS</text>
+        <text y="54" fill="#111B2E" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="750" letter-spacing="-1.5">Welcome back</text>
+        <text y="88" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="14">Enter your account details to access your team workspace.</text>
+      </g>
+
+      <g id="Field/Identifier" transform="translate(42 166)">
+        <text y="12" fill="#26394E" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Username or email</text>
+        <rect y="27" width="386" height="52" rx="11" fill="#FBFCFD" stroke="#D9E0E8"/>
+        <text x="16" y="59" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="14">name@team.com</text>
+        <path d="M352 46l10 8 10-8m-18 15h16a2 2 0 0 0 2-2V46a2 2 0 0 0-2-2h-16a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" fill="none" stroke="#7D8A99" stroke-width="1.5"/>
+      </g>
+
+      <g id="Field/Password" transform="translate(42 276)">
+        <text y="12" fill="#26394E" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700">Password</text>
+        <rect y="27" width="386" height="52" rx="11" fill="#FBFCFD" stroke="#D9E0E8"/>
+        <text x="16" y="59" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="14">Enter your password</text>
+        <path d="M350 53s5-7 12-7 12 7 12 7-5 7-12 7-12-7-12-7Z" fill="none" stroke="#7D8A99" stroke-width="1.5"/>
+        <circle cx="362" cy="53" r="3" fill="none" stroke="#7D8A99" stroke-width="1.5"/>
+      </g>
+
+      <g id="Button/Primary" transform="translate(42 396)">
+        <rect width="386" height="54" rx="11" fill="#0878C9"/>
+        <text x="18" y="33" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Sign in to workspace</text>
+        <rect x="338" y="10" width="34" height="34" rx="8" fill="#FFFFFF" fill-opacity="0.16"/>
+        <path d="M349 27h12m-5-5 5 5-5 5" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <text x="235" y="501" text-anchor="middle" fill="#8591A0" font-family="Inter, Arial, sans-serif" font-size="11">Account access is managed by your team administrator.</text>
+    </g>
+
+    <g id="Annotation" transform="translate(1280 760)">
+      <text fill="#667085" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700">BOARD</text>
+      <text y="18" fill="#98A2B3" font-family="Inter, Arial, sans-serif" font-size="10">Desktop · 1440 × 900</text>
+    </g>
+  </g>
+</svg>
