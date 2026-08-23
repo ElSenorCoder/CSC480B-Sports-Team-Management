@@ -1,0 +1,32 @@
+{
+  "$schema": "https://tr.designtokens.org/format/",
+  "sports-team-management": {
+    "color": {
+      "$type": "color",
+      "ink": { "$value": "#111B2E" },
+      "muted": { "$value": "#667085" },
+      "line": { "$value": "#D9E0E8" },
+      "surface": { "$value": "#FFFFFF" },
+      "canvas": { "$value": "#F8FAFC" },
+      "navy": { "$value": "#122F4D" },
+      "navy-deep": { "$value": "#0A2239" },
+      "blue": { "$value": "#0878C9" },
+      "blue-dark": { "$value": "#05639F" },
+      "green": { "$value": "#2DC58D" },
+      "danger": { "$value": "#C92A2A" }
+    },
+    "spacing": {
+      "$type": "dimension",
+      "xs": { "$value": { "value": 8, "unit": "px" } },
+      "sm": { "$value": { "value": 12, "unit": "px" } },
+      "md": { "$value": { "value": 16, "unit": "px" } },
+      "lg": { "$value": { "value": 24, "unit": "px" } },
+      "xl": { "$value": { "value": 40, "unit": "px" } }
+    },
+    "radius": {
+      "$type": "dimension",
+      "control": { "$value": { "value": 11, "unit": "px" } },
+      "card": { "$value": { "value": 20, "unit": "px" } }
+    }
+  }
+}
