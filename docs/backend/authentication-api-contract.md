@@ -122,6 +122,13 @@ The same general authentication error should be returned for an incorrect passwo
 400 Bad Request
 ```
 
+### Example Response
+
+```json
+{
+  "error": "Username and password are required"
+}
+
 This response applies when required login information is missing from the request.
 
 ## Session Handling
