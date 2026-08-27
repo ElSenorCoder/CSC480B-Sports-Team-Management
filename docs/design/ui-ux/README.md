@@ -10,5 +10,5 @@ The designs will be updated throughout the project as features are implemented a
 
 - `dashboard-ui-design.penpot` - Editable Penpot design file.
 - `dashboard-ui-design.png` - PNG preview of the current dashboard design.
-
-The dashboard design is an initial draft and may be updated based on the functionality implemented by the development team.
+  
+This design is a draft and will be adjusted as needed based on implementation by the development team.
