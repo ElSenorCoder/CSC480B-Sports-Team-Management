@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TextInput } from "../ui/TextInput";
 import { login } from "../../lib/auth/authApi";
-import { tokenStorage } from "../../lib/auth/tokenStorage";
+import { authUserStorage, tokenStorage } from "../../lib/auth/tokenStorage";
 
 type FormErrors = {
   identifier?: string;
@@ -59,6 +59,7 @@ export function LoginForm() {
     try {
       const response = await login({ identifier: identifier.trim(), password });
       tokenStorage.set(response.token);
+      authUserStorage.set(response.user);
       navigate("/dashboard", { replace: true });
     } catch (error) {
       setErrors({

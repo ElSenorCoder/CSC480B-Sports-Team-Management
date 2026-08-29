@@ -3,6 +3,12 @@ import { AuthGuard } from "./components/auth/AuthGuard";
 import { AppShell } from "./components/layout/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { TeamPage } from "./pages/TeamPage";
+import { SchedulePage } from "./pages/SchedulePage";
+import { SearchTeamsPage } from "./pages/SearchTeamsPage";
+import { CoachRosterPage } from "./pages/CoachRosterPage";
+import { CoachSchedulePage } from "./pages/CoachSchedulePage";
 
 export function App() {
   return (
@@ -13,6 +19,12 @@ export function App() {
       <Route element={<AuthGuard />}>
         <Route element={<AppShell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/teams/search" element={<SearchTeamsPage />} />
+          <Route path="/coach/roster" element={<CoachRosterPage />} />
+          <Route path="/coach/schedule" element={<CoachSchedulePage />} />
         </Route>
       </Route>
 
