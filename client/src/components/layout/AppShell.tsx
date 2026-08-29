@@ -1,9 +1,21 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { BrandMark } from "../brand/BrandMark";
-import { tokenStorage } from "../../lib/auth/tokenStorage";
+import { authUserStorage, tokenStorage } from "../../lib/auth/tokenStorage";
 
-const navigation = [
+const baseNavigation = [
   { label: "Overview", href: "/dashboard" },
+] as const;
+
+const playerNavigation = [
+  { label: "Profile", href: "/profile" },
+  { label: "My Team", href: "/team" },
+  { label: "Schedule", href: "/schedule" },
+  { label: "Find a Team", href: "/teams/search" },
+] as const;
+
+const coachNavigation = [
+  { label: "Manage Roster", href: "/coach/roster" },
+  { label: "Manage Schedule", href: "/coach/schedule" },
 ] as const;
 
 function OverviewIcon() {
@@ -22,9 +34,17 @@ function OverviewIcon() {
 
 export function AppShell() {
   const navigate = useNavigate();
+  const user = authUserStorage.get();
+  const navigation =
+    user?.role === "player"
+      ? [...baseNavigation, ...playerNavigation]
+      : user?.role === "coach"
+        ? [...baseNavigation, ...coachNavigation]
+        : baseNavigation;
 
   function logout() {
     tokenStorage.clear();
+    authUserStorage.clear();
     navigate("/login", { replace: true });
   }
 
@@ -63,8 +83,8 @@ export function AppShell() {
           <div className="user-chip" aria-label="Signed in user">
             <span>✓</span>
             <div>
-              <strong>Authenticated</strong>
-              <small>Secure session</small>
+              <strong>{user?.name ?? "Authenticated"}</strong>
+              <small>{user?.role ?? "Secure session"}</small>
             </div>
           </div>
         </header>
