@@ -49,11 +49,12 @@ router.post('/login', async (req, res) => {
         // =========================
 
         const [rows] = await pool.query(
-            `SELECT id, username, first_name, last_name, email, phone
-            FROM users
-            WHERE (username = ? OR email = ?)
-            AND password_hash = ?
-            AND is_active = 1`,
+            `SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, r.name AS role
+            FROM users u
+            INNER JOIN roles r ON r.id = u.role_id
+            WHERE (u.username = ? OR u.email = ?)
+            AND u.password_hash = ?
+            AND u.is_active = 1`,
             [identifier, identifier, encryptedPassword]
         );
 
@@ -115,8 +116,14 @@ router.post('/login', async (req, res) => {
         // =========================
 
         res.status(200).send({
-            user: user,
-            token: sessionToken
+            user: {
+                id: String(user.id),
+                name: `${user.first_name} ${user.last_name}`,
+                email: user.email,
+                role: user.role,
+            },
+            token: sessionToken,
+            expiresIn: 3600,
         });
 
     } catch (error) {

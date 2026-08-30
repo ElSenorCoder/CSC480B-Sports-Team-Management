@@ -72,16 +72,17 @@ The `identifier` may contain either the user's username or email address.
 ```json
 {
   "user": {
-    "id": 1,
-    "username": "coach_smith",
-    "first_name": "John",
-    "last_name": "Smith",
+    "id": "2",
+    "name": "John Smith",
     "email": "jsmith@sportsteam.org",
-    "phone": "555-0102"
+    "role": "coach"
   },
-  "token": "<session-token>"
+  "token": "<session-token>",
+  "expiresIn": 3600
 }
 ```
+
+Updated 2026-08-29: `/login` now joins `roles` and returns `role` (lowercase — `"administrator" | "coach" | "player"`) plus a combined `name` instead of raw `username`/`first_name`/`last_name`/`phone`, matching `client/src/types/auth.ts` and `docs/backend/BACKEND_INTEGRATION.md`. This was previously missing — see `docs/backend/player-coach-integration-cheatsheet.md` for context on why it mattered.
 
 ### Expected Behavior
 

@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM team'
+            'SELECT * FROM teams'
         );
 
         res.json(rows);
@@ -23,27 +23,22 @@ router.get('/', async (req, res) => {
 });
 
 
-// Get team by name and city
-// Example: /api/teams/search?name=Bears&city=Chicago
+// Get team by name
+// Example: /api/teams/search?name=Bears
 router.get('/search', async (req, res) => {
     try {
-        const { name, city } = req.query;
-
-        console.log('Searching for team:', {
-            name,
-            city
-        });
+        const { name } = req.query;
 
         // Validate input
-        if (!name || !city) {
+        if (!name) {
             return res.status(400).json({
-                error: 'Team name and city are required'
+                error: 'Team name is required'
             });
         }
 
         const [rows] = await pool.query(
-            'SELECT * FROM team WHERE Name = ? AND City = ?',
-            [name, city]
+            'SELECT * FROM teams WHERE name LIKE ?',
+            [`%${name}%`]
         );
 
         // Team not found
@@ -65,15 +60,15 @@ router.get('/search', async (req, res) => {
 });
 
 
-// Get team by teamNumber
-// Example: /api/teams/123
-router.get('/:teamNumber', async (req, res) => {
+// Get team by id
+// Example: /api/teams/3
+router.get('/:id', async (req, res) => {
     try {
-        const { teamNumber } = req.params;
+        const { id } = req.params;
 
         const [rows] = await pool.query(
-            'SELECT * FROM team WHERE teamNumber = ?',
-            [teamNumber]
+            'SELECT * FROM teams WHERE id = ?',
+            [id]
         );
 
         if (rows.length === 0) {
