@@ -1,15 +1,53 @@
-import { useState } from "react";
-import { getMyProfile, getTeammates, leaveMyTeam, type Teammate } from "../lib/mockPlayerData";
+import { useEffect, useState } from "react";
+import { getMyProfile, getTeammates, leaveMyTeam, type PlayerProfile, type Teammate } from "../lib/mockPlayerData";
 
 export function TeamPage() {
-  const [profile, setProfile] = useState(getMyProfile());
-  const teammates = getTeammates();
+  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [teammates, setTeammates] = useState<Teammate[]>([]);
   const [selected, setSelected] = useState<Teammate | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
-  function handleLeaveTeam() {
-    leaveMyTeam();
-    setProfile(getMyProfile());
-    setSelected(null);
+  function load() {
+    Promise.all([getMyProfile(), getTeammates()])
+      .then(([profileData, teammatesData]) => {
+        setProfile(profileData);
+        setTeammates(teammatesData);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load team."));
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleLeaveTeam() {
+    setLeaving(true);
+    try {
+      await leaveMyTeam();
+      setSelected(null);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to leave team.");
+    } finally {
+      setLeaving(false);
+    }
+  }
+
+  if (error) {
+    return (
+      <main className="dashboard-main">
+        <p className="form-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <main className="dashboard-main">
+        <p className="empty-note">Loading team…</p>
+      </main>
+    );
   }
 
   if (!profile.teamId) {
@@ -36,8 +74,8 @@ export function TeamPage() {
         </div>
         <div className="dashboard-heading-actions">
           <span className="session-badge">{teammates.length} teammates</span>
-          <button className="link-button" type="button" onClick={handleLeaveTeam}>
-            Leave team
+          <button className="link-button" type="button" onClick={handleLeaveTeam} disabled={leaving}>
+            {leaving ? "Leaving…" : "Leave team"}
           </button>
         </div>
       </div>
@@ -59,7 +97,7 @@ export function TeamPage() {
             </span>
             <span>
               <strong>{teammate.name}</strong>
-              <small>{teammate.position} · #{teammate.jerseyNumber}</small>
+              <small>{teammate.position ?? "Position not set"} · #{teammate.jerseyNumber ?? "—"}</small>
             </span>
           </button>
         ))}
@@ -73,8 +111,8 @@ export function TeamPage() {
             <p>Contact your teammate directly using the details below.</p>
           </div>
           <ul className="status-list">
-            <li><span>Position</span><strong>{selected.position}</strong></li>
-            <li><span>Jersey number</span><strong>#{selected.jerseyNumber}</strong></li>
+            <li><span>Position</span><strong>{selected.position ?? "Not set"}</strong></li>
+            <li><span>Jersey number</span><strong>{selected.jerseyNumber !== null ? `#${selected.jerseyNumber}` : "Not set"}</strong></li>
             <li><span>Email</span><strong>{selected.email}</strong></li>
           </ul>
         </section>

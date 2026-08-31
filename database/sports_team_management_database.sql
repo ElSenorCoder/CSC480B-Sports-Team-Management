@@ -83,6 +83,8 @@ CREATE TABLE IF NOT EXISTS team_memberships (
   team_id BIGINT UNSIGNED NOT NULL,
   user_id BIGINT UNSIGNED NOT NULL,
   role_in_team ENUM('head_coach', 'assistant_coach', 'player') NOT NULL DEFAULT 'player',
+  position VARCHAR(50) NULL,
+  jersey_number SMALLINT UNSIGNED NULL,
   joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_team_user (team_id, user_id),
