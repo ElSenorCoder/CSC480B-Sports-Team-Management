@@ -1,11 +1,36 @@
-import { getMySchedule } from "../lib/mockPlayerData";
+import { useEffect, useState } from "react";
+import { getMySchedule, type Game } from "../lib/mockPlayerData";
 
 function isUpcoming(dateStr: string): boolean {
   return new Date(dateStr).getTime() >= new Date().setHours(0, 0, 0, 0);
 }
 
 export function SchedulePage() {
-  const games = getMySchedule();
+  const [games, setGames] = useState<Game[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMySchedule()
+      .then(setGames)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load schedule."));
+  }, []);
+
+  if (error) {
+    return (
+      <main className="dashboard-main">
+        <p className="form-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (!games) {
+    return (
+      <main className="dashboard-main">
+        <p className="empty-note">Loading schedule…</p>
+      </main>
+    );
+  }
+
   const upcoming = games.filter((game) => isUpcoming(game.date));
   const past = games.filter((game) => !isUpcoming(game.date));
 

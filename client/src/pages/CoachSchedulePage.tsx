@@ -1,35 +1,79 @@
-import { FormEvent, useState } from "react";
-import { addGame, deleteGame, getManagedSchedule, getManagedTeam, type Game } from "../lib/mockPlayerData";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  addGame,
+  deleteGame,
+  getManagedSchedule,
+  getManagedTeam,
+  searchTeams,
+  type Game,
+  type Team,
+} from "../lib/mockPlayerData";
 
 export function CoachSchedulePage() {
-  const team = getManagedTeam();
-  const [games, setGames] = useState(getManagedSchedule());
-  const [opponent, setOpponent] = useState("");
+  const [team, setTeam] = useState<Team | null>(null);
+  const [games, setGames] = useState<Game[]>([]);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
+  const [opponentTeamId, setOpponentTeamId] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
   const [homeAway, setHomeAway] = useState<Game["homeAway"]>("home");
+  const [error, setError] = useState<string | null>(null);
 
-  function refresh() {
-    setGames(getManagedSchedule());
+  function load() {
+    Promise.all([getManagedTeam(), getManagedSchedule(), searchTeams({})])
+      .then(([teamData, gamesData, teamsData]) => {
+        setTeam(teamData);
+        setGames(gamesData);
+        setAllTeams(teamsData.filter((t) => t.id !== teamData.id));
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load schedule."));
   }
 
-  function handleAddGame(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function handleAddGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!opponent.trim() || !date || !time.trim() || !location.trim()) return;
+    if (!opponentTeamId || !date || !time.trim() || !location.trim()) return;
 
-    addGame({ opponent: opponent.trim(), date, time: time.trim(), location: location.trim(), homeAway });
-    setOpponent("");
-    setDate("");
-    setTime("");
-    setLocation("");
-    setHomeAway("home");
-    refresh();
+    try {
+      await addGame({ opponentTeamId, date, time: time.trim(), location: location.trim(), homeAway });
+      setOpponentTeamId("");
+      setDate("");
+      setTime("");
+      setLocation("");
+      setHomeAway("home");
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add game.");
+    }
   }
 
-  function handleDelete(gameId: string) {
-    deleteGame(gameId);
-    refresh();
+  async function handleDelete(gameId: string) {
+    try {
+      await deleteGame(gameId);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove game.");
+    }
+  }
+
+  if (error && !team) {
+    return (
+      <main className="dashboard-main">
+        <p className="form-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (!team) {
+    return (
+      <main className="dashboard-main">
+        <p className="empty-note">Loading schedule…</p>
+      </main>
+    );
   }
 
   return (
@@ -43,10 +87,22 @@ export function CoachSchedulePage() {
         <span className="session-badge">{games.length} games</span>
       </div>
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <form className="form-stack search-form" onSubmit={handleAddGame}>
         <div className="form-field">
           <label htmlFor="game-opponent">Opponent</label>
-          <input id="game-opponent" className="form-input" type="text" placeholder="e.g. Wolves" value={opponent} onChange={(e) => setOpponent(e.target.value)} />
+          <select
+            id="game-opponent"
+            className="form-input"
+            value={opponentTeamId}
+            onChange={(e) => setOpponentTeamId(e.target.value)}
+          >
+            <option value="">Select a team…</option>
+            {allTeams.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
         </div>
         <div className="form-field">
           <label htmlFor="game-date">Date</label>
@@ -54,7 +110,7 @@ export function CoachSchedulePage() {
         </div>
         <div className="form-field">
           <label htmlFor="game-time">Time</label>
-          <input id="game-time" className="form-input" type="text" placeholder="e.g. 6:00 PM" value={time} onChange={(e) => setTime(e.target.value)} />
+          <input id="game-time" className="form-input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
         </div>
         <div className="form-field">
           <label htmlFor="game-location">Location</label>

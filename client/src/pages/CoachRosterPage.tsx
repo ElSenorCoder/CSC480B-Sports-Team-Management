@@ -1,38 +1,86 @@
-import { FormEvent, useState } from "react";
-import { addPlayerToRoster, getManagedTeam, removePlayerFromRoster } from "../lib/mockPlayerData";
+import { useEffect, useState } from "react";
+import {
+  approveJoinRequest,
+  getManagedTeam,
+  getPendingJoinRequests,
+  rejectJoinRequest,
+  removePlayerFromRoster,
+  type JoinRequest,
+  type Team,
+} from "../lib/mockPlayerData";
 
 export function CoachRosterPage() {
-  const [team, setTeam] = useState(getManagedTeam());
-  const [name, setName] = useState("");
-  const [position, setPosition] = useState("");
-  const [jerseyNumber, setJerseyNumber] = useState("");
-  const [email, setEmail] = useState("");
+  const [team, setTeam] = useState<Team | null>(null);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [positions, setPositions] = useState<Record<string, string>>({});
+  const [jerseys, setJerseys] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  function refresh() {
-    setTeam({ ...getManagedTeam() });
+  function load() {
+    Promise.all([getManagedTeam(), getPendingJoinRequests()])
+      .then(([teamData, requestsData]) => {
+        setTeam(teamData);
+        setRequests(requestsData);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load roster."));
   }
 
-  function handleAddPlayer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!name.trim() || !position.trim() || !jerseyNumber.trim()) return;
+  useEffect(() => {
+    load();
+  }, []);
 
-    addPlayerToRoster({
-      name: name.trim(),
-      position: position.trim(),
-      jerseyNumber: Number(jerseyNumber),
-      email: email.trim(),
-    });
-    setName("");
-    setPosition("");
-    setJerseyNumber("");
-    setEmail("");
-    refresh();
+  async function handleApprove(request: JoinRequest) {
+    const position = positions[request.id]?.trim();
+    const jerseyNumber = Number(jerseys[request.id]);
+
+    if (!position || !jerseyNumber) {
+      setError("Enter a position and jersey number before approving.");
+      return;
+    }
+
+    try {
+      await approveJoinRequest(request.id, { position, jerseyNumber });
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve request.");
+    }
   }
 
-  function handleRemove(playerId: string) {
-    removePlayerFromRoster(playerId);
-    refresh();
+  async function handleReject(request: JoinRequest) {
+    try {
+      await rejectJoinRequest(request.id);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject request.");
+    }
   }
+
+  async function handleRemove(playerId: string) {
+    try {
+      await removePlayerFromRoster(playerId);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove player.");
+    }
+  }
+
+  if (error && !team) {
+    return (
+      <main className="dashboard-main">
+        <p className="form-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (!team) {
+    return (
+      <main className="dashboard-main">
+        <p className="empty-note">Loading roster…</p>
+      </main>
+    );
+  }
+
+  const roster = team.roster ?? [];
 
   return (
     <main className="dashboard-main">
@@ -40,49 +88,73 @@ export function CoachRosterPage() {
         <div>
           <p className="dashboard-eyebrow">Roster</p>
           <h1>Manage {team.name} roster</h1>
-          <p>Add new players or remove players from the team.</p>
+          <p>Approve or reject requests to join, or remove a current player.</p>
         </div>
-        <span className="session-badge">{team.roster.length} players</span>
+        <span className="session-badge">{roster.length} players</span>
       </div>
 
-      <form className="form-stack search-form" onSubmit={handleAddPlayer}>
-        <div className="form-field">
-          <label htmlFor="player-name">Name</label>
-          <input id="player-name" className="form-input" type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="player-position">Position</label>
-          <input id="player-position" className="form-input" type="text" placeholder="e.g. Forward" value={position} onChange={(e) => setPosition(e.target.value)} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="player-jersey">Jersey #</label>
-          <input id="player-jersey" className="form-input" type="number" min="0" placeholder="00" value={jerseyNumber} onChange={(e) => setJerseyNumber(e.target.value)} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="player-email">Email</label>
-          <input id="player-email" className="form-input" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </div>
-        <button className="submit-button" type="submit">
-          <span>Add player</span>
-        </button>
-      </form>
+      {error ? <p className="form-error">{error}</p> : null}
 
-      <ul className="game-list">
-        {team.roster.map((player) => (
-          <li key={player.id} className="game-row">
-            <div>
-              <strong>{player.name}</strong>
-              <small>{player.position} · #{player.jerseyNumber}</small>
-            </div>
-            <div className="game-when">
-              <small>{player.email}</small>
-            </div>
-            <button className="link-button" type="button" onClick={() => handleRemove(player.id)}>
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
+      <h2 className="section-heading">Pending join requests</h2>
+      {requests.length === 0 ? (
+        <p className="empty-note">No pending requests.</p>
+      ) : (
+        <ul className="game-list">
+          {requests.map((request) => (
+            <li key={request.id} className="game-row">
+              <div>
+                <strong>{request.name}</strong>
+                <small>{request.email}</small>
+              </div>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="Position"
+                style={{ maxWidth: "8rem" }}
+                value={positions[request.id] ?? ""}
+                onChange={(e) => setPositions((p) => ({ ...p, [request.id]: e.target.value }))}
+              />
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                placeholder="Jersey #"
+                style={{ maxWidth: "6rem" }}
+                value={jerseys[request.id] ?? ""}
+                onChange={(e) => setJerseys((j) => ({ ...j, [request.id]: e.target.value }))}
+              />
+              <button className="submit-button" type="button" style={{ width: "auto" }} onClick={() => handleApprove(request)}>
+                <span>Approve</span>
+              </button>
+              <button className="link-button" type="button" onClick={() => handleReject(request)}>
+                Reject
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h2 className="section-heading">Current roster</h2>
+      {roster.length === 0 ? (
+        <p className="empty-note">No players on this team yet.</p>
+      ) : (
+        <ul className="game-list">
+          {roster.map((player) => (
+            <li key={player.id} className="game-row">
+              <div>
+                <strong>{player.name}</strong>
+                <small>{player.position ?? "Position not set"} · #{player.jerseyNumber ?? "—"}</small>
+              </div>
+              <div className="game-when">
+                <small>{player.email}</small>
+              </div>
+              <button className="link-button" type="button" onClick={() => handleRemove(player.id)}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

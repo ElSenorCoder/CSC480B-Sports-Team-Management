@@ -1,7 +1,31 @@
-import { getMyProfile } from "../lib/mockPlayerData";
+import { useEffect, useState } from "react";
+import { getMyProfile, type PlayerProfile } from "../lib/mockPlayerData";
 
 export function ProfilePage() {
-  const profile = getMyProfile();
+  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMyProfile()
+      .then(setProfile)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load profile."));
+  }, []);
+
+  if (error) {
+    return (
+      <main className="dashboard-main">
+        <p className="form-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <main className="dashboard-main">
+        <p className="empty-note">Loading profile…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="dashboard-main">
@@ -10,7 +34,7 @@ export function ProfilePage() {
           <p className="dashboard-eyebrow">Profile</p>
           <h1>{profile.name}</h1>
           <p>
-            {profile.position} · #{profile.jerseyNumber} · {profile.teamName ?? "No team"}
+            {profile.position ?? "Position not set"} · #{profile.jerseyNumber ?? "—"} · {profile.teamName ?? "No team"}
           </p>
         </div>
         <span className="session-badge">{profile.role}</span>
@@ -24,10 +48,10 @@ export function ProfilePage() {
         </div>
         <ul className="status-list">
           <li><span>Email</span><strong>{profile.email || "—"}</strong></li>
-          <li><span>Phone</span><strong>{profile.phone}</strong></li>
+          <li><span>Phone</span><strong>{profile.phone || "—"}</strong></li>
           <li><span>Team</span><strong>{profile.teamName ?? "No team"}</strong></li>
-          <li><span>Position</span><strong>{profile.position}</strong></li>
-          <li><span>Jersey number</span><strong>#{profile.jerseyNumber}</strong></li>
+          <li><span>Position</span><strong>{profile.position ?? "Not set"}</strong></li>
+          <li><span>Jersey number</span><strong>{profile.jerseyNumber !== null ? `#${profile.jerseyNumber}` : "Not set"}</strong></li>
         </ul>
       </section>
     </main>
