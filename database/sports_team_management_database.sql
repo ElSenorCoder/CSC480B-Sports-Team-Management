@@ -308,13 +308,20 @@ WHERE r.status = 'pending';
 CREATE OR REPLACE VIEW view_game_schedule AS
 SELECT 
     g.id AS game_id,
+    ht.id AS home_team_id,
     ht.name AS home_team,
+    gt.id AS away_team_id,
     gt.name AS away_team,
     g.game_date,
     g.location,
     g.home_team_score,
     g.away_team_score,
-    g.status
+    CASE
+        WHEN g.game_date < NOW() THEN 'completed'
+        ELSE 'scheduled'
+    END AS status
 FROM games g
-INNER JOIN teams ht ON g.home_team_id = ht.id
-INNER JOIN teams gt ON g.away_team_id = gt.id;
+INNER JOIN teams ht
+    ON g.home_team_id = ht.id
+INNER JOIN teams gt
+    ON g.away_team_id = gt.id;
