@@ -22,7 +22,7 @@ async function requireAuth(req, res, next) {
         }
 
         const [rows] = await pool.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, r.name AS role
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.phone, r.name AS role
             FROM sessions s
             INNER JOIN users u ON u.id = s.user_id
             INNER JOIN roles r ON r.id = u.role_id

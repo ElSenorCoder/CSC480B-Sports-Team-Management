@@ -6,10 +6,15 @@ export type PlayerProfile = {
   email: string;
   role: string;
   phone: string;
+};
+
+export type MyTeam = {
+  id: string;
+  name: string;
+  description?: string | null;
+  roleInTeam: "head_coach" | "assistant_coach" | "player";
   position: string | null;
   jerseyNumber: number | null;
-  teamId: string | null;
-  teamName: string | null;
 };
 
 export type Teammate = {
@@ -47,19 +52,19 @@ export type JoinRequest = {
 const AUTH = { authenticated: true };
 
 // =========================
-// Player: profile, team, schedule, search
+// Player: profile, teams, schedule, search
 // =========================
 
 export function getMyProfile(): Promise<PlayerProfile> {
-  return apiRequest<PlayerProfile>("/players/me", {}, AUTH);
+  return apiRequest<PlayerProfile>("/user/me", {}, AUTH);
 }
 
-export function getTeammates(): Promise<Teammate[]> {
-  return apiRequest<Teammate[]>("/players/me/team/roster", {}, AUTH);
+export function getMyTeams(): Promise<MyTeam[]> {
+  return apiRequest<MyTeam[]>("/teams/me", {}, AUTH);
 }
 
-export function getMySchedule(): Promise<Game[]> {
-  return apiRequest<Game[]>("/players/me/team/schedule", {}, AUTH);
+export function getTeamSchedule(teamId: string): Promise<Game[]> {
+  return apiRequest<Game[]>(`/teams/${teamId}/games`, {}, AUTH);
 }
 
 export async function searchTeams(query: { name?: string }): Promise<Team[]> {
@@ -92,8 +97,8 @@ export function requestToJoinTeam(teamId: string): Promise<void> {
   );
 }
 
-export function leaveMyTeam(): Promise<void> {
-  return apiRequest<void>("/players/me/team", { method: "DELETE" }, AUTH);
+export function leaveTeam(teamId: string): Promise<void> {
+  return apiRequest<void>(`/teams/${teamId}/membership`, { method: "DELETE" }, AUTH);
 }
 
 // =========================

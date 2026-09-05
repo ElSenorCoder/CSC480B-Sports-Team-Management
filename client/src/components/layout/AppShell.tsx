@@ -9,7 +9,6 @@ const baseNavigation = [
 const playerNavigation = [
   { label: "Profile", href: "/profile" },
   { label: "My Team", href: "/team" },
-  { label: "Schedule", href: "/schedule" },
   { label: "Find a Team", href: "/teams/search" },
 ] as const;
 
