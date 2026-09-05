@@ -25,7 +25,7 @@ router.post('/login', async (req, res) => {
         console.log('LOGIN ROUTE HIT');
 
         const { identifier, password } = req.body;
-        
+
         // =========================
         // Validate credentials
         // =========================
@@ -41,21 +41,31 @@ router.post('/login', async (req, res) => {
         // =========================
 
         const encryptedPassword = encryptPassword(password);
-        console.log("encryptedPassword : "+encryptedPassword);
-        
 
         // =========================
         // Check user in database
         // =========================
 
         const [rows] = await pool.query(
-            `SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, r.name AS role
-            FROM users u
-            INNER JOIN roles r ON r.id = u.role_id
-            WHERE (u.username = ? OR u.email = ?)
-            AND u.password_hash = ?
-            AND u.is_active = 1`,
-            [identifier, identifier, encryptedPassword]
+            `SELECT
+                u.id,
+                u.username,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.phone,
+                r.name AS role
+             FROM users u
+             INNER JOIN roles r
+                ON r.id = u.role_id
+             WHERE (u.username = ? OR u.email = ?)
+               AND u.password_hash = ?
+               AND u.is_active = 1`,
+            [
+                identifier,
+                identifier,
+                encryptedPassword
+            ]
         );
 
         // =========================
@@ -69,39 +79,63 @@ router.post('/login', async (req, res) => {
         }
 
         const user = rows[0];
-        console.log(user);
 
-        // // =========================
-        // // Generate Session Token
-        // // =========================
+        console.log('Authenticated user:', user.id);
 
-        const sessionToken = crypto.randomBytes(32).toString('hex');
+        // =========================
+        // Generate Session Token
+        // =========================
 
-        // Session expires in 1 hour
+        const sessionToken = crypto
+            .randomBytes(32)
+            .toString('hex');
+
         const expiresAt = new Date(
             Date.now() + 60 * 60 * 1000
         );
 
-        console.log('Generated session token:', sessionToken);
 
         // =========================
-        // Store Session in Database
+        // Store Session
         // =========================
 
-        await pool.query(
-            `INSERT INTO sessions
-                (session_token, user_id, expires_at)
-             VALUES (?, ?, ?)`,
-            [
-                sessionToken,
-                user.id,
-                expiresAt
-            ]
-        );
+        const connection = await pool.getConnection();
+
+        try {
+            await connection.beginTransaction();
+
+            // Remove previous session
+            await connection.query(
+                `DELETE FROM sessions
+                 WHERE user_id = ?`,
+                [user.id]
+            );
+            
+
+            // Create new session
+            await connection.query(
+                `INSERT INTO sessions
+                    (session_token, user_id, expires_at)
+                 VALUES (?, ?, ?)`,
+                [
+                    sessionToken,
+                    user.id,
+                    expiresAt
+                ]
+            );
+
+            await connection.commit();
+
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+
+        } finally {
+            connection.release();
+        }
 
         // =========================
-        // Send Session Token
-        // as HttpOnly Cookie
+        // Send Session Cookie
         // =========================
 
         res.cookie('sessionToken', sessionToken, {
@@ -120,16 +154,16 @@ router.post('/login', async (req, res) => {
                 id: String(user.id),
                 name: `${user.first_name} ${user.last_name}`,
                 email: user.email,
-                role: user.role,
+                role: user.role
             },
             token: sessionToken,
-            expiresIn: 3600,
+            expiresIn: 3600
         });
 
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Internal server error'
         });
     }
