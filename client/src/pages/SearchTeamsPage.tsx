@@ -1,24 +1,24 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
-  getMyProfile,
+  getMyTeams,
   getTeamById,
   requestToJoinTeam,
   searchTeams,
-  type PlayerProfile,
+  type MyTeam,
   type Team,
 } from "../lib/mockPlayerData";
 
 export function SearchTeamsPage() {
   const [name, setName] = useState("");
   const [results, setResults] = useState<Team[]>([]);
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [myTeams, setMyTeams] = useState<MyTeam[]>([]);
   const [selected, setSelected] = useState<Team | null>(null);
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getMyProfile().then(setProfile).catch(() => setProfile(null));
+    getMyTeams().then(setMyTeams).catch(() => setMyTeams([]));
     searchTeams({}).then(setResults).catch((err) => setError(err instanceof Error ? err.message : "Search failed."));
   }, []);
 
@@ -117,7 +117,7 @@ export function SearchTeamsPage() {
             </ul>
           </div>
           <div>
-            {profile?.teamId === selected.id ? (
+            {myTeams.some((team) => team.id === selected.id) ? (
               <span className="pill pill-neutral">Your team</span>
             ) : requestedIds.includes(selected.id) ? (
               <span className="pill pill-sent">Request sent</span>

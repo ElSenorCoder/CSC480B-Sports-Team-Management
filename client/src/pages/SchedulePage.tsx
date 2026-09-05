@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
-import { getMySchedule, type Game } from "../lib/mockPlayerData";
+import { useParams } from "react-router-dom";
+import { getTeamById, getTeamSchedule, type Game } from "../lib/mockPlayerData";
 
 function isUpcoming(dateStr: string): boolean {
   return new Date(dateStr).getTime() >= new Date().setHours(0, 0, 0, 0);
 }
 
 export function SchedulePage() {
+  const { id } = useParams<{ id: string }>();
+  const [teamName, setTeamName] = useState<string | null>(null);
   const [games, setGames] = useState<Game[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getMySchedule()
-      .then(setGames)
+    if (!id) return;
+    Promise.all([getTeamById(id), getTeamSchedule(id)])
+      .then(([team, gamesData]) => {
+        setTeamName(team.name);
+        setGames(gamesData);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load schedule."));
-  }, []);
+  }, [id]);
 
   if (error) {
     return (
@@ -39,8 +46,8 @@ export function SchedulePage() {
       <div className="dashboard-heading">
         <div>
           <p className="dashboard-eyebrow">Schedule</p>
-          <h1>Game schedule</h1>
-          <p>Upcoming and past games for your team.</p>
+          <h1>{teamName} schedule</h1>
+          <p>Upcoming and past games for this team.</p>
         </div>
         <span className="session-badge">{upcoming.length} upcoming</span>
       </div>

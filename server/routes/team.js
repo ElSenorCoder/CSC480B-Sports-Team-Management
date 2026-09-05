@@ -1,194 +1,89 @@
 const express = require('express');
 const pool = require('../db/db');
 const requireAuth = require('../middleware/requireAuth');
+const { toScheduleGame } = require('../lib/gameFormat');
 
 const router = express.Router();
 
 
-// Return The user's team
-router.post('/me', async (req, res) => {
+// Return every team the current user belongs to (a user can be on more
+// than one team, as a player and/or a coach)
+router.get('/me', requireAuth, async (req, res) => {
     try {
-        console.log('USER/ME ROUTE HIT');
-
-        // =========================
-        // Get session token from cookie
-        // =========================
-
-        const sessionToken = req.cookies.sessionToken;
-
-        if (!sessionToken) {
-            return res.status(401).json({
-                error: 'Not authenticated'
-            });
-        }
-
-        console.log('Session token:', sessionToken);
-
-        // =========================
-        // Find valid session + user
-        // =========================
-
         const [rows] = await pool.query(
-            `SELECT
-                u.id,
-                u.username,
-
-                COALESCE(
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'team_id', tr.team_id,
-                            'team_name', tr.team_name,
-                            'role_in_team', tr.role_in_team,
-                            'joined_at', tr.joined_at
-                        )
-                    ),
-                    JSON_ARRAY()
-                ) AS teams
-
-            FROM sessions s
-
-            INNER JOIN users u
-                ON u.id = s.user_id
-
-            INNER JOIN roles r
-                ON r.id = u.role_id
-
-            LEFT JOIN view_team_rosters tr
-                ON tr.user_id = u.id
-
-            WHERE s.session_token = ?
-            AND s.expires_at > NOW()
-            AND u.is_active = 1
-
-            GROUP BY
-                u.id,
-                u.username,
-                r.name`,
-            [sessionToken]
+            `SELECT t.id, t.name, t.description, tm.role_in_team, tm.position, tm.jersey_number
+            FROM team_memberships tm
+            INNER JOIN teams t ON t.id = tm.team_id
+            WHERE tm.user_id = ?
+            ORDER BY tm.joined_at ASC`,
+            [req.user.id]
         );
 
-
-        // =========================
-        // Invalid / expired session
-        // =========================
-
-        if (rows.length === 0) {
-            return res.status(401).json({
-                error: 'Invalid or expired session'
-            });
-        }
-
-        console.log("rows");
-        console.log(rows);
-        
-
-        const user = rows[0];
-
-        // =========================
-        // Return current user
-        // =========================
-
-        return res.status(200).json({
-            result: user
-        });
+        res.json(rows.map((row) => ({
+            id: String(row.id),
+            name: row.name,
+            description: row.description,
+            roleInTeam: row.role_in_team,
+            position: row.position,
+            jerseyNumber: row.jersey_number,
+        })));
 
     } catch (error) {
         console.error(error);
 
-        return res.status(500).json({
-            error: 'Internal server error'
+        res.status(500).json({
+            error: error.message
         });
     }
 });
 
 
-// Return The team's game
-router.post('/:id/games', async (req, res) => {
+// Return one team's game schedule
+// Example: /api/teams/3/games
+router.get('/:id/games', requireAuth, async (req, res) => {
     try {
-
-        // =========================
-        // Get team ID from URL
-        // =========================
-
-        const teamId = req.params.id;
-
-        console.log('Team ID:', teamId);
-
-        // =========================
-        // Get session token from cookie
-        // =========================
-
-        const sessionToken = req.cookies.sessionToken;
-
-        if (!sessionToken) {
-            return res.status(401).json({
-                error: 'Not authenticated'
-            });
-        }
-
-        console.log('Session token:', sessionToken);
-
-        // =========================
-        // Validate session
-        // =========================
-
-        const [sessionRows] = await pool.query(
-            `SELECT user_id
-             FROM sessions
-             WHERE session_token = ?
-               AND expires_at > NOW()`,
-            [sessionToken]
-        );
-
-        if (sessionRows.length === 0) {
-            return res.status(401).json({
-                error: 'Invalid or expired session'
-            });
-        }
-
-        // =========================
-        // Get games for team
-        // =========================
+        const { id } = req.params;
 
         const [rows] = await pool.query(
-            `SELECT
-                game_id,
-                home_team,
-                away_team,
-                location,
-                game_date,
-                home_team_score,
-                away_team_score,
-                CASE
-                    WHEN home_team_id = ? THEN 'home'
-                    ELSE 'away'
-                END AS home_or_away,
-                status
-
-             FROM view_game_schedule
-
-             WHERE home_team_id = ?
-                OR away_team_id = ?
-
-             ORDER BY game_date ASC`,
-            [teamId, teamId, teamId]
+            `SELECT g.id, g.game_date, g.location, g.status,
+                    g.home_team_id, g.away_team_id,
+                    ht.name AS home_team_name, at.name AS away_team_name
+            FROM games g
+            INNER JOIN teams ht ON ht.id = g.home_team_id
+            INNER JOIN teams at ON at.id = g.away_team_id
+            WHERE g.home_team_id = ? OR g.away_team_id = ?
+            ORDER BY g.game_date ASC`,
+            [id, id]
         );
 
-        console.log('Games:');
-        console.log(rows);
-
-        // =========================
-        // Return games
-        // =========================
-
-        return res.status(200).json({
-            games: rows
-        });
+        res.json(rows.map((row) => toScheduleGame(row, Number(id))));
 
     } catch (error) {
         console.error(error);
 
-        return res.status(500).json({
+        res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+
+// Leave a team the current user belongs to
+router.delete('/:id/membership', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await pool.query(
+            `DELETE FROM team_memberships WHERE team_id = ? AND user_id = ?`,
+            [id, req.user.id]
+        );
+
+        res.status(204).send();
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
             error: error.message
         });
     }

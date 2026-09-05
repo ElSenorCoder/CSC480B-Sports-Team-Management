@@ -4,17 +4,27 @@
 
 This originally documented the contract needed to replace the frontend's mock data with real backend endpoints. **That work is now done** — the player and coach pages call real API endpoints against the real database. This doc now describes what was actually built, as a reference.
 
-## Status (2026-08-30)
+## Status (2026-09-04)
 
 Fully implemented and verified end to end against a local MySQL instance:
 
 - Auth (`server/routes/auth.js`) returns `role` on login.
-- `server/routes/team.js` — `GET /`, `GET /search?name=`, `GET /:id` (includes roster), `POST /:id/join-requests`.
-- `server/routes/player.js` (rewritten) — `GET /me`, `GET /me/team/roster`, `GET /me/team/schedule`, `DELETE /me/team`.
-- `server/routes/coach.js` (rewritten) — `GET /me/team`, `GET /me/team/schedule`, `GET /me/team/join-requests`, `PATCH /me/team/join-requests/:id`, `DELETE /me/team/roster/:userId`, `POST /me/team/schedule`, `PATCH /me/team/schedule/:gameId`, `DELETE /me/team/schedule/:gameId`.
-- New: `server/middleware/requireAuth.js` — verifies the `Authorization: Bearer <token>` header (or `sessionToken` cookie) against the `sessions` table and attaches `req.user`. Nothing was authenticated before this; every route above uses it, and `coach.js` additionally requires `req.user.role === "coach"`.
-- New: `server/lib/gameFormat.js` — shared helper translating a `games` row (one row per matchup: `home_team_id`/`away_team_id`) into the frontend's per-team shape (`opponent`, `homeAway`), used by both `player.js` and `coach.js`.
-- `client/src/lib/mockPlayerData.ts` — every function now calls the real API (`apiRequest`, `{ authenticated: true }`) instead of returning fixture data. Same file name/exports, so no other frontend file needed to change its imports.
+- `server/routes/user.js` (new) — `GET /me`: profile only (`id`, `name`, `email`, `role`, `phone`). Not player- or coach-specific — every user has one.
+- `server/routes/team.js` — `GET /`, `GET /search?name=`, `GET /:id` (includes roster), `GET /me` (every team the caller belongs to, see below), `GET /:id/games` (that team's schedule), `POST /:id/join-requests`, `DELETE /:id/membership` (leave a team).
+- `server/routes/player.js` — **removed**. Everything it did is now covered by `/api/user/me` and the team-scoped endpoints above; there was nothing left that was actually player-specific.
+- `server/routes/coach.js` (unchanged this round) — `GET /me/team`, `GET /me/team/schedule`, `GET /me/team/join-requests`, `PATCH /me/team/join-requests/:id`, `DELETE /me/team/roster/:userId`, `POST /me/team/schedule`, `PATCH /me/team/schedule/:gameId`, `DELETE /me/team/schedule/:gameId`. Still single-managed-team-scoped; the multi-team fix below only covers the player-facing "My Team" flow.
+- `server/middleware/requireAuth.js` — verifies the `Authorization: Bearer <token>` header (or `sessionToken` cookie) against the `sessions` table and attaches `req.user` (now includes `phone`). Every route above uses it.
+- `server/lib/gameFormat.js` — shared helper translating a `games` row (one row per matchup: `home_team_id`/`away_team_id`) into the frontend's per-team shape (`opponent`, `homeAway`), used by both `team.js` and `coach.js`.
+- `client/src/lib/mockPlayerData.ts` — every function calls the real API (`apiRequest`, `{ authenticated: true }`); no fixture data left.
+
+## Route naming and multi-team fix (2026-09-04)
+
+A teammate reviewing the first pass flagged two real issues, both addressed:
+
+1. **Profile and team routes were scoped under `/api/players/...`**, implying only players have a profile or a team. Fixed by moving profile to `/api/user/me` (any role) and "my teams" to `/api/teams/me` (any role, team-agnostic).
+2. **The data model assumed one team per user** (previously logged below as a known limitation). This was a real gap, not just a naming issue — seed data has `coach_smith` head-coaching two teams. Fixed properly: `GET /api/teams/me` now returns **every** team the caller belongs to (as player, assistant coach, or head coach), each tagged with `roleInTeam`. The frontend's "My Team" page is now a team list; selecting one navigates to `/team/:id` (roster) and, from there, `/team/:id/schedule` (that team's games via `GET /api/teams/:id/games`). There's no more standalone top-level "Schedule" nav item.
+
+This fix only covers the player-facing flow (`team.js`). `coach.js`'s "my managed team" endpoints still pick the first coaching membership by id — a coach managing two teams (like the seed data's `coach_smith`) still only sees one on the Manage Roster/Schedule pages. Extending the same multi-team pattern to the coach pages is the natural next step but wasn't part of this round's ask.
 
 ## How the two schema mismatches from before were resolved
 
@@ -38,7 +48,7 @@ Similarly, `CoachSchedulePage.tsx`'s "Opponent" field is now a `<select>` popula
 
 ## Known limitation (by design, not a bug)
 
-Seed data shows some users belong to more than one team (e.g. `coach_smith` head-coaches both `Thunderbolts` and `Vipers`). The frontend data model assumes one team per user. Every "my team" / "my managed team" query picks the first `team_memberships` row (ordered by `id`) — a real coach or player with multiple teams will only ever see the first one in this UI. Fixing that would mean a team-switcher UI, which is out of scope for now.
+`coach.js`'s "managed team" queries still pick the first coaching `team_memberships` row (ordered by `id`) — a coach managing more than one team (e.g. `coach_smith`, who head-coaches both `Thunderbolts` and `Vipers`) only sees one on the Manage Roster/Manage Schedule pages. The player-facing side of this was fixed (see above); the coach side wasn't part of this round.
 
 ## Bug found and fixed during this work: date/time round-tripping
 

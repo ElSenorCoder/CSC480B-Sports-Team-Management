@@ -33,9 +33,7 @@ export function ProfilePage() {
         <div>
           <p className="dashboard-eyebrow">Profile</p>
           <h1>{profile.name}</h1>
-          <p>
-            {profile.position ?? "Position not set"} · #{profile.jerseyNumber ?? "—"} · {profile.teamName ?? "No team"}
-          </p>
+          <p>Position and team details are shown on each of your teams under My Team.</p>
         </div>
         <span className="session-badge">{profile.role}</span>
       </div>
@@ -49,9 +47,6 @@ export function ProfilePage() {
         <ul className="status-list">
           <li><span>Email</span><strong>{profile.email || "—"}</strong></li>
           <li><span>Phone</span><strong>{profile.phone || "—"}</strong></li>
-          <li><span>Team</span><strong>{profile.teamName ?? "No team"}</strong></li>
-          <li><span>Position</span><strong>{profile.position ?? "Not set"}</strong></li>
-          <li><span>Jersey number</span><strong>{profile.jerseyNumber !== null ? `#${profile.jerseyNumber}` : "Not set"}</strong></li>
         </ul>
       </section>
     </main>
