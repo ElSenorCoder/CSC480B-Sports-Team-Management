@@ -130,7 +130,6 @@ CREATE TABLE IF NOT EXISTS games (
   location VARCHAR(255) NULL,
   home_team_score SMALLINT UNSIGNED DEFAULT 0,
   away_team_score SMALLINT UNSIGNED DEFAULT 0,
-  status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -146,6 +145,36 @@ CREATE TABLE IF NOT EXISTS games (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  sender_id BIGINT UNSIGNED NOT NULL,
+  receiver_id BIGINT UNSIGNED NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_messages_sender_receiver_id (
+    sender_id,
+    receiver_id,
+    id
+  ),
+  KEY idx_messages_receiver_sender_id (
+    receiver_id,
+    sender_id,
+    id
+  ),
+  CONSTRAINT fk_messages_sender
+    FOREIGN KEY (sender_id)
+    REFERENCES users (id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+  CONSTRAINT fk_messages_receiver
+    FOREIGN KEY (receiver_id)
+    REFERENCES users (id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT
+) ENGINE = InnoDB;
+
 
 -- Enforce different teams rule via Triggers
 DELIMITER //
@@ -248,12 +277,12 @@ INSERT INTO team_join_requests (team_id, user_id, status) VALUES
   (4, 3, 'rejected');
 
 -- Seed Data: Games
-INSERT INTO games (home_team_id, away_team_id, game_date, location, home_team_score, away_team_score, status) VALUES
-  (1, 2, '2026-09-15 18:00:00', 'Main Arena Stadium', 84, 78, 'completed'),
-  (3, 4, '2026-09-20 16:00:00', 'North Field Complex', 5, 3, 'completed'),
-  (2, 1, '2026-10-01 19:30:00', 'Eastside Sports Complex', 0, 0, 'scheduled'),
-  (4, 1, '2026-10-10 17:00:00', 'Central High Gymnasium', 0, 0, 'scheduled'),
-  (2, 3, '2026-10-15 15:30:00', 'West Park Turf', 0, 0, 'scheduled');
+INSERT INTO games (home_team_id, away_team_id, game_date, location, home_team_score, away_team_score) VALUES
+  (1, 2, '2026-09-15 18:00:00', 'Main Arena Stadium', 84, 78), 
+  (3, 4, '2026-09-20 16:00:00', 'North Field Complex', 5, 3),
+  (2, 1, '2026-10-01 19:30:00', 'Eastside Sports Complex', 0, 0),
+  (4, 1, '2026-10-10 17:00:00', 'Central High Gymnasium', 0, 0),
+  (2, 3, '2026-10-15 15:30:00', 'West Park Turf', 0, 0);
   
   -- ==========================================
 -- 3. VIEWS
