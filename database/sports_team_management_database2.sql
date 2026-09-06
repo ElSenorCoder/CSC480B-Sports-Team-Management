@@ -130,7 +130,6 @@ CREATE TABLE IF NOT EXISTS games (
   location VARCHAR(255) NULL,
   home_team_score SMALLINT UNSIGNED DEFAULT 0,
   away_team_score SMALLINT UNSIGNED DEFAULT 0,
-  status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -147,7 +146,37 @@ CREATE TABLE IF NOT EXISTS games (
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
--- Triggers
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  sender_id BIGINT UNSIGNED NOT NULL,
+  receiver_id BIGINT UNSIGNED NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_messages_sender_receiver_id (
+    sender_id,
+    receiver_id,
+    id
+  ),
+  KEY idx_messages_receiver_sender_id (
+    receiver_id,
+    sender_id,
+    id
+  ),
+  CONSTRAINT fk_messages_sender
+    FOREIGN KEY (sender_id)
+    REFERENCES users (id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+  CONSTRAINT fk_messages_receiver
+    FOREIGN KEY (receiver_id)
+    REFERENCES users (id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT
+) ENGINE = InnoDB;
+
+
+-- Enforce different teams rule via Triggers
 DELIMITER //
 
 CREATE TRIGGER prevent_same_team_game_insert
@@ -172,18 +201,38 @@ END //
 
 DELIMITER ;
 
+INSERT IGNORE INTO roles (name, description)
+VALUES
+  ('administrator', 'Full application administration'),
+  ('coach', 'Team and player management'),
+  ('player', 'Player self-service access');
+
+-- Express login lookup using mysql2 placeholders:
+-- SELECT
+--   u.id,
+--   u.username,
+--   u.email,
+--   u.password_hash,
+--   u.display_name,
+--   r.name AS role
+-- FROM users AS u
+-- INNER JOIN roles AS r ON r.id = u.role_id
+-- WHERE u.is_active = 1
+--   AND (u.email = ? OR u.username = ?)
+-- LIMIT 1;
+
 -- ==========================================
 -- 2. SEED DATA
 -- ==========================================
 
--- Roles
+-- Seed Data: Roles
 INSERT IGNORE INTO roles (id, name, description) VALUES
   (1, 'administrator', 'Full application administration'),
   (2, 'coach', 'Team and player management'),
   (3, 'player', 'Player self-service access'),
   (4, 'parent', 'Parent/guardian view access');
 
--- Users
+-- Seed Data: Users
 INSERT INTO users (id, username, role_id, first_name, last_name, email, phone, password_hash, is_active) VALUES
   (1, 'admin_user', 1, 'Mila', 'Hose', 'admin@sportsteam.org', '555-0101', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
   (2, 'coach_smith', 2, 'John', 'Smith', 'jsmith@sportsteam.org', '555-0102', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
@@ -194,42 +243,22 @@ INSERT INTO users (id, username, role_id, first_name, last_name, email, phone, p
   (7, 'player_marcus', 3, 'Marcus', 'Wright', 'm.wright@example.com', '555-0107', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
   (8, 'player_chloe', 3, 'Chloe', 'Bennett', 'c.bennett@example.com', '555-0108', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
   (9, 'coach_taylor', 2, 'Robert', 'Taylor', 'rtaylor@sportsteam.org', '555-0109', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (10, 'player_sam', 3, 'Sam', 'Wilson', 'swilson@example.com', '555-0110', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (11, 'player_liam', 3, 'Liam', 'Miller', 'l.miller@example.com', '555-0111', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (12, 'player_olivia', 3, 'Olivia', 'Davis', 'o.davis@example.com', '555-0112', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (13, 'player_noah', 3, 'Noah', 'Garcia', 'n.garcia@example.com', '555-0113', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (14, 'player_emma', 3, 'Emma', 'Rodriguez', 'e.rodriguez@example.com', '555-0114', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (15, 'player_oliver', 3, 'Oliver', 'Martinez', 'o.martinez@example.com', '555-0115', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (16, 'player_charlotte', 3, 'Charlotte', 'Hernandez', 'c.hernandez@example.com', '555-0116', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (17, 'player_james', 3, 'James', 'Lopez', 'j.lopez@example.com', '555-0117', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (18, 'player_sophia', 3, 'Sophia', 'Gonzalez', 's.gonzalez@example.com', '555-0118', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (19, 'player_benjamin', 3, 'Benjamin', 'Wilson', 'b.wilson@example.com', '555-0119', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (20, 'player_isabella', 3, 'Isabella', 'Anderson', 'i.anderson@example.com', '555-0120', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (21, 'player_lucas', 3, 'Lucas', 'Thomas', 'l.thomas@example.com', '555-0121', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (22, 'player_mia', 3, 'Mia', 'Taylor', 'm.taylor@example.com', '555-0122', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (23, 'player_henry', 3, 'Henry', 'Moore', 'h.moore@example.com', '555-0123', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (24, 'player_evelyn', 3, 'Evelyn', 'Jackson', 'e.jackson@example.com', '555-0124', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (25, 'player_alexander', 3, 'Alexander', 'Martin', 'a.martin@example.com', '555-0125', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (26, 'player_harper', 3, 'Harper', 'Lee', 'h.lee@example.com', '555-0126', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (27, 'player_mason', 3, 'Mason', 'Perez', 'm.perez@example.com', '555-0127', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (28, 'player_camila', 3, 'Camila', 'Thompson', 'c.thompson@example.com', '555-0128', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (29, 'player_michael', 3, 'Michael', 'White', 'm.white@example.com', '555-0129', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1),
-  (30, 'player_gianna', 3, 'Gianna', 'Harris', 'g.harris@example.com', '555-0130', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1);
+  (10, 'player_sam', 3, 'Sam', 'Wilson', 'swilson@example.com', '555-0110', '89e01536ac207279409d4de1e5253e01f4a1769e696db0d6062ca9b8f56767c8', 1);
 
--- Sessions
+-- Seed Data: Sessions
 INSERT INTO sessions (session_token, user_id, expires_at) VALUES
   ('a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0', 1, DATE_ADD(NOW(), INTERVAL 1 DAY)),
   ('b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef01', 2, DATE_ADD(NOW(), INTERVAL 1 DAY)),
   ('c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef012', 3, DATE_ADD(NOW(), INTERVAL 1 DAY));
 
--- Teams
+-- Seed Data: Teams
 INSERT INTO teams (id, name, description, created_by) VALUES
   (1, 'Thunderbolts', 'Varsity Basketball Team', 2),
   (2, 'Vipers', 'Club Soccer Team', 2),
   (3, 'Falcons', 'Junior Varsity Baseball Team', 6),
   (4, 'Titans', 'Track and Field Squad', 9);
 
--- Team Memberships
+-- Seed Data: Team Memberships
 INSERT INTO team_memberships (team_id, user_id, role_in_team) VALUES
   (1, 2, 'head_coach'),
   (1, 3, 'player'),
@@ -240,42 +269,22 @@ INSERT INTO team_memberships (team_id, user_id, role_in_team) VALUES
   (3, 10, 'player'),
   (4, 9, 'head_coach');
 
--- Team Join Requests
+-- Seed Data: Team Join Requests
 INSERT INTO team_join_requests (team_id, user_id, status) VALUES
   (1, 5, 'pending'),
   (2, 7, 'approved'),
   (3, 8, 'pending'),
-  (4, 3, 'rejected'),
-  (1, 11, 'pending'),
-  (2, 12, 'pending'),
-  (3, 13, 'pending'),
-  (4, 14, 'pending'),
-  (1, 15, 'pending'),
-  (2, 16, 'pending'),
-  (3, 17, 'pending'),
-  (4, 18, 'pending'),
-  (1, 19, 'pending'),
-  (2, 20, 'pending'),
-  (3, 21, 'pending'),
-  (4, 22, 'pending'),
-  (1, 23, 'pending'),
-  (2, 24, 'pending'),
-  (3, 25, 'pending'),
-  (4, 26, 'pending'),
-  (1, 27, 'pending'),
-  (2, 28, 'pending'),
-  (3, 29, 'pending'),
-  (4, 30, 'pending');
+  (4, 3, 'rejected');
 
--- Games
-INSERT INTO games (home_team_id, away_team_id, game_date, location, home_team_score, away_team_score, status) VALUES
-  (1, 2, '2026-09-15 18:00:00', 'Main Arena Stadium', 84, 78, 'completed'),
-  (3, 4, '2026-09-20 16:00:00', 'North Field Complex', 5, 3, 'completed'),
-  (2, 1, '2026-10-01 19:30:00', 'Eastside Sports Complex', 0, 0, 'scheduled'),
-  (4, 1, '2026-10-10 17:00:00', 'Central High Gymnasium', 0, 0, 'scheduled'),
-  (2, 3, '2026-10-15 15:30:00', 'West Park Turf', 0, 0, 'scheduled');
-
--- ==========================================
+-- Seed Data: Games
+INSERT INTO games (home_team_id, away_team_id, game_date, location, home_team_score, away_team_score) VALUES
+  (1, 2, '2026-09-15 18:00:00', 'Main Arena Stadium', 84, 78), 
+  (3, 4, '2026-09-20 16:00:00', 'North Field Complex', 5, 3),
+  (2, 1, '2026-10-01 19:30:00', 'Eastside Sports Complex', 0, 0),
+  (4, 1, '2026-10-10 17:00:00', 'Central High Gymnasium', 0, 0),
+  (2, 3, '2026-10-15 15:30:00', 'West Park Turf', 0, 0);
+  
+  -- ==========================================
 -- 3. VIEWS
 -- ==========================================
 
@@ -294,23 +303,7 @@ FROM users u
 INNER JOIN roles r ON u.role_id = r.id
 WHERE u.is_active = 1;
 
--- 2. All Users View
-CREATE OR REPLACE VIEW view_users AS
-SELECT 
-    u.id AS user_id,
-    u.username,
-    u.first_name,
-    u.last_name,
-    u.email,
-    u.phone,
-    u.is_active,
-    r.name AS role_name,
-    u.created_at,
-    u.updated_at
-FROM users u
-INNER JOIN roles r ON u.role_id = r.id;
-
--- 3. Team Rosters View
+-- 2. Team Rosters View
 CREATE OR REPLACE VIEW view_team_rosters AS
 SELECT 
     t.id AS team_id,
@@ -325,7 +318,7 @@ INNER JOIN teams t ON tm.team_id = t.id
 INNER JOIN users u ON tm.user_id = u.id
 WHERE u.is_active = 1;
 
--- 4. Pending Join Requests View
+-- 3. Pending Join Requests View
 CREATE OR REPLACE VIEW view_pending_join_requests AS
 SELECT 
     r.id AS request_id,
@@ -340,7 +333,7 @@ INNER JOIN teams t ON r.team_id = t.id
 INNER JOIN users u ON r.user_id = u.id
 WHERE r.status = 'pending';
 
--- 5. Game Schedule View
+-- 4. Game Schedule View
 CREATE OR REPLACE VIEW view_game_schedule AS
 SELECT 
     g.id AS game_id,
@@ -357,36 +350,7 @@ SELECT
         ELSE 'scheduled'
     END AS status
 FROM games g
-INNER JOIN teams ht ON g.home_team_id = ht.id
-INNER JOIN teams gt ON g.away_team_id = gt.id;
-
--- 6. Team Scores / Standings View
-CREATE OR REPLACE VIEW view_team_scores AS
-SELECT 
-    t.id AS team_id,
-    t.name AS team_name,
-    COUNT(CASE WHEN (g.home_team_id = t.id AND g.home_team_score > g.away_team_score) OR (g.away_team_id = t.id AND g.away_team_score > g.home_team_score) THEN 1 END) AS wins,
-    COUNT(CASE WHEN (g.home_team_id = t.id AND g.home_team_score < g.away_team_score) OR (g.away_team_id = t.id AND g.away_team_score < g.home_team_score) THEN 1 END) AS losses,
-    COUNT(CASE WHEN (g.home_team_id = t.id OR g.away_team_id = t.id) AND g.home_team_score = g.away_team_score AND g.status = 'completed' THEN 1 END) AS ties,
-    SUM(CASE WHEN g.home_team_id = t.id THEN g.home_team_score WHEN g.away_team_id = t.id THEN g.away_team_score ELSE 0 END) AS points_scored,
-    SUM(CASE WHEN g.home_team_id = t.id THEN g.away_team_score WHEN g.away_team_id = t.id THEN g.home_team_score ELSE 0 END) AS points_conceded
-FROM teams t
-LEFT JOIN games g 
-    ON (t.id = g.home_team_id OR t.id = g.away_team_id) 
-   AND g.status = 'completed'
-GROUP BY t.id, t.name;
-
--- ==========================================
--- 4. DISPLAY ALL TABLES & VIEWS IN WORKBENCH
--- ==========================================
-
-SELECT * FROM users;
-SELECT * FROM roles;
-SELECT * FROM teams;
-SELECT * FROM team_memberships;
-SELECT * FROM team_join_requests;
-SELECT * FROM games;
-SELECT * FROM view_pending_join_requests;
-SELECT * FROM view_team_rosters;
-SELECT * FROM view_game_schedule;
-SELECT * FROM view_team_scores;
+INNER JOIN teams ht
+    ON g.home_team_id = ht.id
+INNER JOIN teams gt
+    ON g.away_team_id = gt.id;
