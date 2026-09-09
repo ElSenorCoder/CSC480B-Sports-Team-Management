@@ -10,5 +10,11 @@ The designs will be updated throughout the project as features are implemented a
 
 - `dashboard-ui-design.penpot` - Editable Penpot design file.
 - `dashboard-ui-design.png` - PNG preview of the current dashboard design.
-  
+
 This design is a draft and will be adjusted as needed based on implementation by the development team.
+
+### Communication UI/UX Design
+
+- `communication-ui-ux.md` - Initial Sprint 4 design for the future team messages and announcements interface.
+
+This design defines a small communication scope including the message list, sender information, message content, date/time, and a basic compose area for authorized users.
