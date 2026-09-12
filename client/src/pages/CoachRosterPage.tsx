@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   approveJoinRequest,
   getManagedTeam,
@@ -10,14 +11,17 @@ import {
 } from "../lib/mockPlayerData";
 
 export function CoachRosterPage() {
+  const { id } = useParams<{ id: string }>();
   const [team, setTeam] = useState<Team | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [jerseys, setJerseys] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   function load() {
-    Promise.all([getManagedTeam(), getPendingJoinRequests()])
+    if (!id) return;
+    Promise.all([getManagedTeam(id), getPendingJoinRequests(id)])
       .then(([teamData, requestsData]) => {
         setTeam(teamData);
         setRequests(requestsData);
@@ -26,41 +30,59 @@ export function CoachRosterPage() {
   }
 
   useEffect(() => {
+    setTeam(null);
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   async function handleApprove(request: JoinRequest) {
+    if (!id) return;
     const position = positions[request.id]?.trim();
-    const jerseyNumber = Number(jerseys[request.id]);
+    const jerseyRaw = jerseys[request.id]?.trim();
+    const jerseyNumber = Number(jerseyRaw);
 
-    if (!position || !jerseyNumber) {
-      setError("Enter a position and jersey number before approving.");
+    if (!position || !jerseyRaw || !Number.isFinite(jerseyNumber) || jerseyNumber < 0) {
+      setError("Enter a position and a valid jersey number before approving.");
       return;
     }
 
+    setProcessingId(request.id);
     try {
-      await approveJoinRequest(request.id, { position, jerseyNumber });
+      await approveJoinRequest(id, request.id, { position, jerseyNumber });
+      setError(null);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to approve request.");
+    } finally {
+      setProcessingId(null);
     }
   }
 
   async function handleReject(request: JoinRequest) {
+    if (!id) return;
+    setProcessingId(request.id);
     try {
-      await rejectJoinRequest(request.id);
+      await rejectJoinRequest(id, request.id);
+      setError(null);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reject request.");
+    } finally {
+      setProcessingId(null);
     }
   }
 
   async function handleRemove(playerId: string) {
+    if (!id) return;
+    setProcessingId(playerId);
     try {
-      await removePlayerFromRoster(playerId);
+      await removePlayerFromRoster(id, playerId);
+      setError(null);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove player.");
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -90,7 +112,12 @@ export function CoachRosterPage() {
           <h1>Manage {team.name} roster</h1>
           <p>Approve or reject requests to join, or remove a current player.</p>
         </div>
-        <span className="session-badge">{roster.length} players</span>
+        <div className="dashboard-heading-actions">
+          <span className="session-badge">{roster.length} players</span>
+          <Link className="link-button" to={`/coach/team/${team.id}/schedule`}>
+            Manage schedule
+          </Link>
+        </div>
       </div>
 
       {error ? <p className="form-error">{error}</p> : null}
@@ -113,6 +140,7 @@ export function CoachRosterPage() {
                 style={{ maxWidth: "8rem" }}
                 value={positions[request.id] ?? ""}
                 onChange={(e) => setPositions((p) => ({ ...p, [request.id]: e.target.value }))}
+                disabled={processingId === request.id}
               />
               <input
                 className="form-input"
@@ -122,11 +150,23 @@ export function CoachRosterPage() {
                 style={{ maxWidth: "6rem" }}
                 value={jerseys[request.id] ?? ""}
                 onChange={(e) => setJerseys((j) => ({ ...j, [request.id]: e.target.value }))}
+                disabled={processingId === request.id}
               />
-              <button className="submit-button" type="button" style={{ width: "auto" }} onClick={() => handleApprove(request)}>
-                <span>Approve</span>
+              <button
+                className="submit-button"
+                type="button"
+                style={{ width: "auto" }}
+                onClick={() => handleApprove(request)}
+                disabled={processingId === request.id}
+              >
+                <span>{processingId === request.id ? "Working…" : "Approve"}</span>
               </button>
-              <button className="link-button" type="button" onClick={() => handleReject(request)}>
+              <button
+                className="link-button"
+                type="button"
+                onClick={() => handleReject(request)}
+                disabled={processingId === request.id}
+              >
                 Reject
               </button>
             </li>
@@ -148,8 +188,13 @@ export function CoachRosterPage() {
               <div className="game-when">
                 <small>{player.email}</small>
               </div>
-              <button className="link-button" type="button" onClick={() => handleRemove(player.id)}>
-                Remove
+              <button
+                className="link-button"
+                type="button"
+                onClick={() => handleRemove(player.id)}
+                disabled={processingId === player.id}
+              >
+                {processingId === player.id ? "Removing…" : "Remove"}
               </button>
             </li>
           ))}

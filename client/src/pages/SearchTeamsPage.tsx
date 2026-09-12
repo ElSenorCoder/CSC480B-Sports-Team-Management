@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   getMyTeams,
   getTeamById,
@@ -16,6 +16,9 @@ export function SearchTeamsPage() {
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tracks the most recently clicked team so a slower, earlier request
+  // can't overwrite a faster, later one if they resolve out of order.
+  const latestRequestId = useRef<string | null>(null);
 
   useEffect(() => {
     getMyTeams().then(setMyTeams).catch(() => setMyTeams([]));
@@ -29,12 +32,22 @@ export function SearchTeamsPage() {
       .then(setResults)
       .catch((err) => setError(err instanceof Error ? err.message : "Search failed."));
     setSelected(null);
+    latestRequestId.current = null;
   }
 
   function handleSelectTeam(team: Team) {
+    setError(null);
+    setSelected(null);
+    latestRequestId.current = team.id;
     getTeamById(team.id)
-      .then(setSelected)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load team."));
+      .then((fullTeam) => {
+        if (latestRequestId.current === team.id) setSelected(fullTeam);
+      })
+      .catch((err) => {
+        if (latestRequestId.current === team.id) {
+          setError(err instanceof Error ? err.message : "Failed to load team.");
+        }
+      });
   }
 
   async function handleRequestToJoin(teamId: string) {
@@ -42,6 +55,7 @@ export function SearchTeamsPage() {
     try {
       await requestToJoinTeam(teamId);
       setRequestedIds((ids) => [...ids, teamId]);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send request.");
     } finally {

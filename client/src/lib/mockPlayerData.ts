@@ -102,27 +102,38 @@ export function leaveTeam(teamId: string): Promise<void> {
 }
 
 // =========================
-// Coach: manage roster and schedule for one team
+// Coach: manage roster and schedule for the teams they coach
 // =========================
 
-export function getManagedTeam(): Promise<Team> {
-  return apiRequest<Team>("/coaches/me/team", {}, AUTH);
+export type ManagedTeam = {
+  id: string;
+  name: string;
+  roleInTeam: "head_coach" | "assistant_coach";
+};
+
+export function getMyManagedTeams(): Promise<ManagedTeam[]> {
+  return apiRequest<ManagedTeam[]>("/coaches/me/teams", {}, AUTH);
 }
 
-export function getManagedSchedule(): Promise<Game[]> {
-  return apiRequest<Game[]>("/coaches/me/team/schedule", {}, AUTH);
+export function getManagedTeam(teamId: string): Promise<Team> {
+  return apiRequest<Team>(`/coaches/me/teams/${teamId}`, {}, AUTH);
 }
 
-export function getPendingJoinRequests(): Promise<JoinRequest[]> {
-  return apiRequest<JoinRequest[]>("/coaches/me/team/join-requests", {}, AUTH);
+export function getManagedSchedule(teamId: string): Promise<Game[]> {
+  return apiRequest<Game[]>(`/coaches/me/teams/${teamId}/schedule`, {}, AUTH);
+}
+
+export function getPendingJoinRequests(teamId: string): Promise<JoinRequest[]> {
+  return apiRequest<JoinRequest[]>(`/coaches/me/teams/${teamId}/join-requests`, {}, AUTH);
 }
 
 export function approveJoinRequest(
+  teamId: string,
   requestId: string,
   details: { position: string; jerseyNumber: number },
 ): Promise<void> {
   return apiRequest<void>(
-    `/coaches/me/team/join-requests/${requestId}`,
+    `/coaches/me/teams/${teamId}/join-requests/${requestId}`,
     {
       method: "PATCH",
       body: JSON.stringify({ status: "approved", ...details }),
@@ -131,39 +142,42 @@ export function approveJoinRequest(
   );
 }
 
-export function rejectJoinRequest(requestId: string): Promise<void> {
+export function rejectJoinRequest(teamId: string, requestId: string): Promise<void> {
   return apiRequest<void>(
-    `/coaches/me/team/join-requests/${requestId}`,
+    `/coaches/me/teams/${teamId}/join-requests/${requestId}`,
     { method: "PATCH", body: JSON.stringify({ status: "rejected" }) },
     AUTH,
   );
 }
 
-export function removePlayerFromRoster(playerId: string): Promise<void> {
+export function removePlayerFromRoster(teamId: string, playerId: string): Promise<void> {
   return apiRequest<void>(
-    `/coaches/me/team/roster/${playerId}`,
+    `/coaches/me/teams/${teamId}/roster/${playerId}`,
     { method: "DELETE" },
     AUTH,
   );
 }
 
-export function addGame(input: {
-  opponentTeamId: string;
-  date: string;
-  time: string;
-  location: string;
-  homeAway: Game["homeAway"];
-}): Promise<void> {
+export function addGame(
+  teamId: string,
+  input: {
+    opponentTeamId: string;
+    date: string;
+    time: string;
+    location: string;
+    homeAway: Game["homeAway"];
+  },
+): Promise<void> {
   return apiRequest<void>(
-    "/coaches/me/team/schedule",
+    `/coaches/me/teams/${teamId}/schedule`,
     { method: "POST", body: JSON.stringify(input) },
     AUTH,
   );
 }
 
-export function deleteGame(gameId: string): Promise<void> {
+export function deleteGame(teamId: string, gameId: string): Promise<void> {
   return apiRequest<void>(
-    `/coaches/me/team/schedule/${gameId}`,
+    `/coaches/me/teams/${teamId}/schedule/${gameId}`,
     { method: "DELETE" },
     AUTH,
   );
