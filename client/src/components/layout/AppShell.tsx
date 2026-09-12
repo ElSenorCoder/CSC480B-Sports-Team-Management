@@ -13,8 +13,8 @@ const playerNavigation = [
 ] as const;
 
 const coachNavigation = [
-  { label: "Manage Roster", href: "/coach/roster" },
-  { label: "Manage Schedule", href: "/coach/schedule" },
+  { label: "Profile", href: "/profile" },
+  { label: "My Teams", href: "/coach" },
 ] as const;
 
 function OverviewIcon() {

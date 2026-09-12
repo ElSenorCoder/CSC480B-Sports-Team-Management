@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
   addGame,
   deleteGame,
@@ -10,6 +11,7 @@ import {
 } from "../lib/mockPlayerData";
 
 export function CoachSchedulePage() {
+  const { id } = useParams<{ id: string }>();
   const [team, setTeam] = useState<Team | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
@@ -19,9 +21,12 @@ export function CoachSchedulePage() {
   const [location, setLocation] = useState("");
   const [homeAway, setHomeAway] = useState<Game["homeAway"]>("home");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   function load() {
-    Promise.all([getManagedTeam(), getManagedSchedule(), searchTeams({})])
+    if (!id) return;
+    Promise.all([getManagedTeam(id), getManagedSchedule(id), searchTeams({})])
       .then(([teamData, gamesData, teamsData]) => {
         setTeam(teamData);
         setGames(gamesData);
@@ -31,32 +36,43 @@ export function CoachSchedulePage() {
   }
 
   useEffect(() => {
+    setTeam(null);
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   async function handleAddGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!opponentTeamId || !date || !time.trim() || !location.trim()) return;
+    if (!id || !opponentTeamId || !date || !time.trim() || !location.trim()) return;
 
+    setSubmitting(true);
     try {
-      await addGame({ opponentTeamId, date, time: time.trim(), location: location.trim(), homeAway });
+      await addGame(id, { opponentTeamId, date, time: time.trim(), location: location.trim(), homeAway });
       setOpponentTeamId("");
       setDate("");
       setTime("");
       setLocation("");
       setHomeAway("home");
+      setError(null);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add game.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   async function handleDelete(gameId: string) {
+    if (!id) return;
+    setRemovingId(gameId);
     try {
-      await deleteGame(gameId);
+      await deleteGame(id, gameId);
+      setError(null);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove game.");
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -84,7 +100,12 @@ export function CoachSchedulePage() {
           <h1>Manage {team.name} schedule</h1>
           <p>Add new games or remove games from the schedule.</p>
         </div>
-        <span className="session-badge">{games.length} games</span>
+        <div className="dashboard-heading-actions">
+          <span className="session-badge">{games.length} games</span>
+          <Link className="link-button" to={`/coach/team/${team.id}`}>
+            Manage roster
+          </Link>
+        </div>
       </div>
 
       {error ? <p className="form-error">{error}</p> : null}
@@ -97,6 +118,7 @@ export function CoachSchedulePage() {
             className="form-input"
             value={opponentTeamId}
             onChange={(e) => setOpponentTeamId(e.target.value)}
+            disabled={submitting}
           >
             <option value="">Select a team…</option>
             {allTeams.map((t) => (
@@ -106,15 +128,15 @@ export function CoachSchedulePage() {
         </div>
         <div className="form-field">
           <label htmlFor="game-date">Date</label>
-          <input id="game-date" className="form-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="game-date" className="form-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={submitting} />
         </div>
         <div className="form-field">
           <label htmlFor="game-time">Time</label>
-          <input id="game-time" className="form-input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          <input id="game-time" className="form-input" type="time" value={time} onChange={(e) => setTime(e.target.value)} disabled={submitting} />
         </div>
         <div className="form-field">
           <label htmlFor="game-location">Location</label>
-          <input id="game-location" className="form-input" type="text" placeholder="Venue" value={location} onChange={(e) => setLocation(e.target.value)} />
+          <input id="game-location" className="form-input" type="text" placeholder="Venue" value={location} onChange={(e) => setLocation(e.target.value)} disabled={submitting} />
         </div>
         <div className="form-field">
           <label htmlFor="game-home-away">Home / Away</label>
@@ -123,34 +145,44 @@ export function CoachSchedulePage() {
             className="form-input"
             value={homeAway}
             onChange={(e) => setHomeAway(e.target.value as Game["homeAway"])}
+            disabled={submitting}
           >
             <option value="home">Home</option>
             <option value="away">Away</option>
           </select>
         </div>
-        <button className="submit-button" type="submit">
-          <span>Add game</span>
+        <button className="submit-button" type="submit" disabled={submitting}>
+          <span>{submitting ? "Adding…" : "Add game"}</span>
         </button>
       </form>
 
-      <ul className="game-list">
-        {games.map((game) => (
-          <li key={game.id} className="game-row">
-            <span className={`badge badge-${game.homeAway}`}>{game.homeAway === "home" ? "Home" : "Away"}</span>
-            <div>
-              <strong>vs {game.opponent}</strong>
-              <small>{game.location}</small>
-            </div>
-            <div className="game-when">
-              <strong>{game.date}</strong>
-              <small>{game.time}</small>
-            </div>
-            <button className="link-button" type="button" onClick={() => handleDelete(game.id)}>
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
+      {games.length === 0 ? (
+        <p className="empty-note">No games scheduled yet.</p>
+      ) : (
+        <ul className="game-list">
+          {games.map((game) => (
+            <li key={game.id} className="game-row">
+              <span className={`badge badge-${game.homeAway}`}>{game.homeAway === "home" ? "Home" : "Away"}</span>
+              <div>
+                <strong>vs {game.opponent}</strong>
+                <small>{game.location}</small>
+              </div>
+              <div className="game-when">
+                <strong>{game.date}</strong>
+                <small>{game.time}</small>
+              </div>
+              <button
+                className="link-button"
+                type="button"
+                onClick={() => handleDelete(game.id)}
+                disabled={removingId === game.id}
+              >
+                {removingId === game.id ? "Removing…" : "Remove"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

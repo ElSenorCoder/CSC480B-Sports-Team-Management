@@ -19,31 +19,60 @@ function requireCoach(req, res, next) {
 router.use(requireAuth, requireCoach);
 
 // =========================
-// Resolve the team this coach manages
+// Confirm the caller coaches this specific team
 // =========================
+// A coach can manage more than one team (seed data has coach_smith
+// head-coaching two), so every route below is scoped by :teamId
+// instead of picking "the" managed team.
 
-async function getManagedTeamId(userId) {
+async function assertManagesTeam(userId, teamId) {
     const [rows] = await pool.query(
-        `SELECT team_id FROM team_memberships
-        WHERE user_id = ? AND role_in_team IN ('head_coach', 'assistant_coach')
-        ORDER BY id ASC
-        LIMIT 1`,
-        [userId]
+        `SELECT 1 FROM team_memberships
+        WHERE user_id = ? AND team_id = ? AND role_in_team IN ('head_coach', 'assistant_coach')`,
+        [userId, teamId]
     );
 
-    return rows.length > 0 ? rows[0].team_id : null;
+    return rows.length > 0;
 }
 
 // =========================
-// GET /api/coaches/me/team
+// GET /api/coaches/me/teams
+// =========================
+// Every team this coach manages.
+
+router.get('/me/teams', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT t.id, t.name, tm.role_in_team
+            FROM team_memberships tm
+            INNER JOIN teams t ON t.id = tm.team_id
+            WHERE tm.user_id = ? AND tm.role_in_team IN ('head_coach', 'assistant_coach')
+            ORDER BY tm.joined_at ASC`,
+            [req.user.id]
+        );
+
+        res.json(rows.map((row) => ({
+            id: String(row.id),
+            name: row.name,
+            roleInTeam: row.role_in_team,
+        })));
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// =========================
+// GET /api/coaches/me/teams/:teamId
 // =========================
 
-router.get('/me/team', async (req, res) => {
+router.get('/me/teams/:teamId', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
+        const { teamId } = req.params;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         const [teamRows] = await pool.query(
@@ -78,15 +107,15 @@ router.get('/me/team', async (req, res) => {
 });
 
 // =========================
-// GET /api/coaches/me/team/schedule
+// GET /api/coaches/me/teams/:teamId/schedule
 // =========================
 
-router.get('/me/team/schedule', async (req, res) => {
+router.get('/me/teams/:teamId/schedule', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
+        const { teamId } = req.params;
 
-        if (!teamId) {
-            return res.json([]);
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         const [rows] = await pool.query(
@@ -101,7 +130,7 @@ router.get('/me/team/schedule', async (req, res) => {
             [teamId, teamId]
         );
 
-        res.json(rows.map((row) => toScheduleGame(row, teamId)));
+        res.json(rows.map((row) => toScheduleGame(row, Number(teamId))));
 
     } catch (error) {
         console.error(error);
@@ -110,15 +139,15 @@ router.get('/me/team/schedule', async (req, res) => {
 });
 
 // =========================
-// GET /api/coaches/me/team/join-requests
+// GET /api/coaches/me/teams/:teamId/join-requests
 // =========================
 
-router.get('/me/team/join-requests', async (req, res) => {
+router.get('/me/teams/:teamId/join-requests', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
+        const { teamId } = req.params;
 
-        if (!teamId) {
-            return res.json([]);
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         const [rows] = await pool.query(
@@ -145,17 +174,16 @@ router.get('/me/team/join-requests', async (req, res) => {
 });
 
 // =========================
-// PATCH /api/coaches/me/team/join-requests/:id
+// PATCH /api/coaches/me/teams/:teamId/join-requests/:id
 // =========================
 
-router.patch('/me/team/join-requests/:id', async (req, res) => {
+router.patch('/me/teams/:teamId/join-requests/:id', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
-        const { id } = req.params;
+        const { teamId, id } = req.params;
         const { status, position, jerseyNumber } = req.body;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         if (status !== 'approved' && status !== 'rejected') {
@@ -202,16 +230,15 @@ router.patch('/me/team/join-requests/:id', async (req, res) => {
 });
 
 // =========================
-// DELETE /api/coaches/me/team/roster/:userId
+// DELETE /api/coaches/me/teams/:teamId/roster/:userId
 // =========================
 
-router.delete('/me/team/roster/:userId', async (req, res) => {
+router.delete('/me/teams/:teamId/roster/:userId', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
-        const { userId } = req.params;
+        const { teamId, userId } = req.params;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         await pool.query(
@@ -228,16 +255,16 @@ router.delete('/me/team/roster/:userId', async (req, res) => {
 });
 
 // =========================
-// POST /api/coaches/me/team/schedule
+// POST /api/coaches/me/teams/:teamId/schedule
 // =========================
 
-router.post('/me/team/schedule', async (req, res) => {
+router.post('/me/teams/:teamId/schedule', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
+        const { teamId } = req.params;
         const { opponentTeamId, date, time, location, homeAway } = req.body;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         if (!opponentTeamId || !date || !time || !location || !homeAway) {
@@ -263,17 +290,16 @@ router.post('/me/team/schedule', async (req, res) => {
 });
 
 // =========================
-// PATCH /api/coaches/me/team/schedule/:gameId
+// PATCH /api/coaches/me/teams/:teamId/schedule/:gameId
 // =========================
 
-router.patch('/me/team/schedule/:gameId', async (req, res) => {
+router.patch('/me/teams/:teamId/schedule/:gameId', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
-        const { gameId } = req.params;
+        const { teamId, gameId } = req.params;
         const { date, time, location } = req.body;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         const fields = [];
@@ -309,16 +335,15 @@ router.patch('/me/team/schedule/:gameId', async (req, res) => {
 });
 
 // =========================
-// DELETE /api/coaches/me/team/schedule/:gameId
+// DELETE /api/coaches/me/teams/:teamId/schedule/:gameId
 // =========================
 
-router.delete('/me/team/schedule/:gameId', async (req, res) => {
+router.delete('/me/teams/:teamId/schedule/:gameId', async (req, res) => {
     try {
-        const teamId = await getManagedTeamId(req.user.id);
-        const { gameId } = req.params;
+        const { teamId, gameId } = req.params;
 
-        if (!teamId) {
-            return res.status(404).json({ error: 'No managed team found' });
+        if (!(await assertManagesTeam(req.user.id, teamId))) {
+            return res.status(403).json({ error: 'You do not manage this team' });
         }
 
         await pool.query(

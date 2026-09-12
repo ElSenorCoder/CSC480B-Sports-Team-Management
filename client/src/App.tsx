@@ -8,6 +8,7 @@ import { TeamPage } from "./pages/TeamPage";
 import { TeamDetailPage } from "./pages/TeamDetailPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { SearchTeamsPage } from "./pages/SearchTeamsPage";
+import { CoachTeamsPage } from "./pages/CoachTeamsPage";
 import { CoachRosterPage } from "./pages/CoachRosterPage";
 import { CoachSchedulePage } from "./pages/CoachSchedulePage";
 
@@ -25,8 +26,9 @@ export function App() {
           <Route path="/team/:id" element={<TeamDetailPage />} />
           <Route path="/team/:id/schedule" element={<SchedulePage />} />
           <Route path="/teams/search" element={<SearchTeamsPage />} />
-          <Route path="/coach/roster" element={<CoachRosterPage />} />
-          <Route path="/coach/schedule" element={<CoachSchedulePage />} />
+          <Route path="/coach" element={<CoachTeamsPage />} />
+          <Route path="/coach/team/:id" element={<CoachRosterPage />} />
+          <Route path="/coach/team/:id/schedule" element={<CoachSchedulePage />} />
         </Route>
       </Route>
 
