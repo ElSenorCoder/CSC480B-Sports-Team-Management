@@ -45,7 +45,7 @@ router.get('/:id/games', requireAuth, async (req, res) => {
         const { id } = req.params;
 
         const [rows] = await pool.query(
-            `SELECT g.id, g.game_date, g.location, g.status,
+            `SELECT g.id, g.game_date, g.location,
                     g.home_team_id, g.away_team_id,
                     ht.name AS home_team_name, at.name AS away_team_name
             FROM games g

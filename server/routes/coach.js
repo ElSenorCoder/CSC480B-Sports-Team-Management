@@ -90,7 +90,7 @@ router.get('/me/team/schedule', async (req, res) => {
         }
 
         const [rows] = await pool.query(
-            `SELECT g.id, g.game_date, g.location, g.status,
+            `SELECT g.id, g.game_date, g.location,
                     g.home_team_id, g.away_team_id,
                     ht.name AS home_team_name, at.name AS away_team_name
             FROM games g
@@ -270,7 +270,7 @@ router.patch('/me/team/schedule/:gameId', async (req, res) => {
     try {
         const teamId = await getManagedTeamId(req.user.id);
         const { gameId } = req.params;
-        const { date, time, location, status } = req.body;
+        const { date, time, location } = req.body;
 
         if (!teamId) {
             return res.status(404).json({ error: 'No managed team found' });
@@ -286,10 +286,6 @@ router.patch('/me/team/schedule/:gameId', async (req, res) => {
         if (location) {
             fields.push('location = ?');
             values.push(location);
-        }
-        if (status) {
-            fields.push('status = ?');
-            values.push(status);
         }
 
         if (fields.length === 0) {
