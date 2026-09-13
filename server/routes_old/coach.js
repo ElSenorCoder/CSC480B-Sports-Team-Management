@@ -43,9 +43,11 @@ async function assertManagesTeam(userId, teamId) {
 router.get('/me/teams', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT id, name, role_in_team FROM view_team_membership
-            WHERE user_id = ? AND role_in_team IN ('head_coach', 'assistant_coach')
-            ORDER BY name ASC`,
+            `SELECT t.id, t.name, tm.role_in_team
+            FROM team_memberships tm
+            INNER JOIN teams t ON t.id = tm.team_id
+            WHERE tm.user_id = ? AND tm.role_in_team IN ('head_coach', 'assistant_coach')
+            ORDER BY tm.joined_at ASC`,
             [req.user.id]
         );
 
@@ -79,8 +81,10 @@ router.get('/me/teams/:teamId', async (req, res) => {
         );
 
         const [rosterRows] = await pool.query(
-            `SELECT * FROM view_team_players_list
-            WHERE team_id = ?`,
+            `SELECT u.id, u.first_name, u.last_name, u.email, tm.position, tm.jersey_number
+            FROM team_memberships tm
+            INNER JOIN users u ON u.id = tm.user_id
+            WHERE tm.team_id = ? AND tm.role_in_team = 'player'`,
             [teamId]
         );
 
@@ -115,9 +119,14 @@ router.get('/me/teams/:teamId/schedule', async (req, res) => {
         }
 
         const [rows] = await pool.query(
-            `SELECT * FROM view_team_game
-            WHERE home_team_id = ? OR away_team_id = ?
-            ORDER BY game_date DESC`,
+            `SELECT g.id, g.game_date, g.location,
+                    g.home_team_id, g.away_team_id,
+                    ht.name AS home_team_name, at.name AS away_team_name
+            FROM games g
+            INNER JOIN teams ht ON ht.id = g.home_team_id
+            INNER JOIN teams at ON at.id = g.away_team_id
+            WHERE g.home_team_id = ? OR g.away_team_id = ?
+            ORDER BY g.game_date ASC`,
             [teamId, teamId]
         );
 
@@ -142,9 +151,11 @@ router.get('/me/teams/:teamId/join-requests', async (req, res) => {
         }
 
         const [rows] = await pool.query(
-            `SELECT * FROM view_player_team_join_requests
-            WHERE team_id = ?
-            ORDER BY requested_at ASC`,
+            `SELECT r.id, r.requested_at, u.id AS user_id, u.first_name, u.last_name, u.email
+            FROM team_join_requests r
+            INNER JOIN users u ON u.id = r.user_id
+            WHERE r.team_id = ? AND r.status = 'pending'
+            ORDER BY r.requested_at ASC`,
             [teamId]
         );
 
