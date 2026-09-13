@@ -48,19 +48,17 @@ router.post('/login', async (req, res) => {
 
         const [rows] = await pool.query(
             `SELECT
-                u.id,
-                u.username,
-                u.first_name,
-                u.last_name,
-                u.email,
-                u.phone,
-                r.name AS role
-             FROM users u
-             INNER JOIN roles r
-                ON r.id = u.role_id
-             WHERE (u.username = ? OR u.email = ?)
-               AND u.password_hash = ?
-               AND u.is_active = 1`,
+                id,
+                username,
+                first_name,
+                last_name,
+                email,
+                phone,
+                role
+             FROM view_user_roles
+             WHERE (username = ? OR email = ?)
+               AND password_hash = ?
+               AND is_active = 1`,
             [
                 identifier,
                 identifier,

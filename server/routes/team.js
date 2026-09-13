@@ -11,11 +11,10 @@ const router = express.Router();
 router.get('/me', requireAuth, async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT t.id, t.name, t.description, tm.role_in_team, tm.position, tm.jersey_number
-            FROM team_memberships tm
-            INNER JOIN teams t ON t.id = tm.team_id
-            WHERE tm.user_id = ?
-            ORDER BY tm.joined_at ASC`,
+            `SELECT id, name, description, role_in_team, position, jersey_number
+            FROM view_team_membership
+            WHERE user_id = ?
+            ORDER BY joined_at ASC`,
             [req.user.id]
         );
 
@@ -45,14 +44,9 @@ router.get('/:id/games', requireAuth, async (req, res) => {
         const { id } = req.params;
 
         const [rows] = await pool.query(
-            `SELECT g.id, g.game_date, g.location,
-                    g.home_team_id, g.away_team_id,
-                    ht.name AS home_team_name, at.name AS away_team_name
-            FROM games g
-            INNER JOIN teams ht ON ht.id = g.home_team_id
-            INNER JOIN teams at ON at.id = g.away_team_id
-            WHERE g.home_team_id = ? OR g.away_team_id = ?
-            ORDER BY g.game_date ASC`,
+            `SELECT * FROM view_team_game
+            WHERE home_team_id = ? OR away_team_id = ?
+            ORDER BY game_date ASC`,
             [id, id]
         );
 
@@ -177,10 +171,9 @@ router.get('/:id', async (req, res) => {
         }
 
         const [rosterRows] = await pool.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, tm.position, tm.jersey_number
-            FROM team_memberships tm
-            INNER JOIN users u ON u.id = tm.user_id
-            WHERE tm.team_id = ? AND tm.role_in_team = 'player'`,
+            `SELECT id, first_name, last_name, email, position, jersey_number
+            FROM view_team_players_list
+            WHERE team_id = ?`,
             [id]
         );
 
