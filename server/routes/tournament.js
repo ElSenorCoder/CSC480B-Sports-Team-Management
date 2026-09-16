@@ -605,6 +605,57 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
+router.get('/:id/standings', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [standings] = await pool.query(
+            `SELECT
+                ts.team_id,
+                t.name AS team,
+                ts.win,
+                ts.loss,
+                ts.draw,
+                ts.score,
+                (
+                    ts.win + 0.5 * ts.draw
+                ) / NULLIF(
+                    ts.win + ts.loss + ts.draw,
+                    0
+                ) AS win_percentage
+             FROM tournament_standings ts
+             INNER JOIN teams t
+                ON ts.team_id = t.id
+             WHERE ts.tournament_id = ?
+             ORDER BY
+                win_percentage DESC,
+                ts.score DESC,
+                ts.win DESC`,
+            [id]
+        );
+
+        res.json(
+            standings.map((row, index) => ({
+                position: index + 1,
+                teamId: String(row.team_id),
+                team: row.team,
+                win: row.win,
+                loss: row.loss,
+                draw: row.draw,
+                score: row.score,
+                winPercentage: Number(row.win_percentage)
+            }))
+        );
+
+    } catch (error) {
+        console.error('Error getting standings:', error);
+
+        res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
 // Delete a tournament created by the current user
 router.delete('/:id/delete', requireAuth, async (req, res) => {
     try {
