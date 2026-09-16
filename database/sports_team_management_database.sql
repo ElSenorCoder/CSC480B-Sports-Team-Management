@@ -347,26 +347,6 @@ LEFT JOIN parents p_link ON p_user.id = p_link.player_id
 LEFT JOIN users par_user ON p_link.parent_id = par_user.id
 WHERE r.name = 'player';
 
--- 3. Teams with Scheduled Games View
-CREATE OR REPLACE VIEW view_teams_with_games AS
-SELECT 
-    g.id AS game_id,
-    ht.id AS home_team_id,
-    ht.name AS home_team,
-    gt.id AS away_team_id,
-    gt.name AS away_team,
-    g.game_date,
-    g.location,
-    g.home_team_score,
-    g.away_team_score,
-    CASE 
-        WHEN g.game_date > NOW() THEN 'scheduled'
-        ELSE 'completed'
-    END AS status
-FROM games g
-INNER JOIN teams ht ON g.home_team_id = ht.id
-INNER JOIN teams gt ON g.away_team_id = gt.id;
-
 -- 4. Player Join Requests View
 CREATE OR REPLACE VIEW view_player_team_join_requests AS
 SELECT 
@@ -433,20 +413,25 @@ SELECT
 FROM teams t;
 
 
--- 6. Team Games
-CREATE OR REPLACE VIEW view_team_game AS
+-- 6. Teams with Scheduled Games View
+CREATE OR REPLACE VIEW view_teams_with_games AS
 SELECT 
-  g.id, 
-  g.game_date, 
-  g.location,
-  g.home_team_id, 
-  g.away_team_id,
-  ht.name AS home_team_name, 
-  at.name AS away_team_name
+    g.id AS game_id,
+    ht.id AS home_team_id,
+    ht.name AS home_team_name,
+    gt.id AS away_team_id,
+    gt.name AS away_team_name,
+    g.game_date,
+    g.location,
+    g.home_team_score,
+    g.away_team_score,
+    CASE 
+        WHEN g.game_date > NOW() THEN 'scheduled'
+        ELSE 'completed'
+    END AS status
 FROM games g
-INNER JOIN teams ht ON ht.id = g.home_team_id
-INNER JOIN teams at ON at.id = g.away_team_id
-ORDER BY g.game_date DESC;
+INNER JOIN teams ht ON g.home_team_id = ht.id
+INNER JOIN teams gt ON g.away_team_id = gt.id;
 
 
 -- 7. View Team Membership

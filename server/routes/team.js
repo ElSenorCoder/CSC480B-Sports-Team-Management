@@ -44,7 +44,7 @@ router.get('/:id/games', requireAuth, async (req, res) => {
         const { id } = req.params;
 
         const [rows] = await pool.query(
-            `SELECT * FROM view_team_game
+            `SELECT * FROM view_teams_with_games
             WHERE home_team_id = ? OR away_team_id = ?
             ORDER BY game_date ASC`,
             [id, id]

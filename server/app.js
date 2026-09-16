@@ -7,6 +7,7 @@ const teamRoutes = require('./routes/team');
 const coachRoutes = require('./routes/coach');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const tournamentRoutes = require('./routes/tournament');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/coaches', coachRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/tournaments', tournamentRoutes);
 
 // =========================
 // Welcome
