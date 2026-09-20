@@ -7,6 +7,7 @@ const teamRoutes = require('./routes/team');
 const coachRoutes = require('./routes/coach');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
+const tournamentRoutes = require('./routes/tournaments');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/coaches', coachRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/tournaments', tournamentRoutes);
 
 // =========================
 // Welcome
@@ -88,6 +90,15 @@ app.get('/api/', async (req, res) => {
 // Start Server
 // =========================
 
-app.listen(3001, () => {
-    console.log('Server running on port 3001');
+const PORT = process.env.PORT || 3001;
+
+// Express 5 passes a listen failure (e.g. port already in use) to this
+// callback instead of throwing, so it has to be checked here.
+app.listen(PORT, (error) => {
+    if (error) {
+        console.error(`Could not start the server on port ${PORT}: ${error.message}`);
+        process.exit(1);
+    }
+
+    console.log(`Server running on port ${PORT}`);
 });
