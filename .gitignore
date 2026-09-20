@@ -16,3 +16,6 @@ dist/
 # Environment variables
 .env
 .env.*
+
+# Database backups (contain user data and password hashes)
+backup*.sql
