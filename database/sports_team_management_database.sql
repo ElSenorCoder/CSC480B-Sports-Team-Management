@@ -159,7 +159,8 @@ CREATE TABLE IF NOT EXISTS tournament (
 
 -- 9. Games Table
 -- Tournament games set tournament_id, round (1 = first round) and descriptions
--- (e.g. 'Semi-Final Match'); regular scheduled games leave all three NULL.
+-- (e.g. 'Semi-Final Match'); regular scheduled games have no round or
+-- tournament_id, and the coach schedule route labels them 'Friendly Game'.
 -- A tournament game with equal scores has not been played yet (elimination
 -- games cannot end in a draw).
 CREATE TABLE IF NOT EXISTS games (

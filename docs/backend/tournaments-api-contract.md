@@ -139,7 +139,7 @@ Added to `database/sports_team_management_database.sql`:
 
 - `tournament` (`id`, `user_id` creator, `name`, `status`, `date_created`)
 - `tournament_standings` (`tournament_id`, `team_id`, `win`, `loss`, `draw`, `score`; unique per tournament and team)
-- `games.round`, `games.tournament_id`, `games.descriptions` (all `NULL` for regular scheduled games)
+- `games.round`, `games.tournament_id`, `games.descriptions` (`round` and `tournament_id` are `NULL` for regular scheduled games, whose `descriptions` is `'Friendly Game'` when added through the coach schedule route)
 - `view_teams_with_games` now exposes `home_team_name`, `away_team_name`, `round`, `tournament_id` and `descriptions`
 
 Tournament games are ordinary rows in `games`, so they also appear in each team's schedule.

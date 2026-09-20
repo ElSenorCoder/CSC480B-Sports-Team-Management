@@ -115,7 +115,7 @@ router.get('/me/teams/:teamId/schedule', async (req, res) => {
         }
 
         const [rows] = await pool.query(
-            `SELECT * FROM view_team_game
+            `SELECT * FROM view_teams_with_games
             WHERE home_team_id = ? OR away_team_id = ?
             ORDER BY game_date DESC`,
             [teamId, teamId]
@@ -265,8 +265,8 @@ router.post('/me/teams/:teamId/schedule', async (req, res) => {
         const gameDate = `${date} ${time}:00`;
 
         const [result] = await pool.query(
-            `INSERT INTO games (home_team_id, away_team_id, game_date, location)
-            VALUES (?, ?, ?, ?)`,
+            `INSERT INTO games (home_team_id, away_team_id, game_date, location, descriptions)
+            VALUES (?, ?, ?, ?, 'Friendly Game')`,
             [homeTeamId, awayTeamId, gameDate, location]
         );
 
