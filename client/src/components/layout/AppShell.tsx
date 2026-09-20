@@ -4,6 +4,7 @@ import { authUserStorage, tokenStorage } from "../../lib/auth/tokenStorage";
 
 const baseNavigation = [
   { label: "Overview", href: "/dashboard" },
+  { label: "Tournaments", href: "/tournaments" },
 ] as const;
 
 const playerNavigation = [

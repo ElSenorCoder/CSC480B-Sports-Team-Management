@@ -11,6 +11,9 @@ import { SearchTeamsPage } from "./pages/SearchTeamsPage";
 import { CoachTeamsPage } from "./pages/CoachTeamsPage";
 import { CoachRosterPage } from "./pages/CoachRosterPage";
 import { CoachSchedulePage } from "./pages/CoachSchedulePage";
+import { TournamentsPage } from "./pages/TournamentsPage";
+import { TournamentCreatePage } from "./pages/TournamentCreatePage";
+import { TournamentDetailPage } from "./pages/TournamentDetailPage";
 
 export function App() {
   return (
@@ -29,6 +32,9 @@ export function App() {
           <Route path="/coach" element={<CoachTeamsPage />} />
           <Route path="/coach/team/:id" element={<CoachRosterPage />} />
           <Route path="/coach/team/:id/schedule" element={<CoachSchedulePage />} />
+          <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route path="/tournaments/new" element={<TournamentCreatePage />} />
+          <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
         </Route>
       </Route>
 

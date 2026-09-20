@@ -7,10 +7,12 @@ type ApiOptions = {
 
 type ApiErrorBody = {
   message?: string;
-  error?: {
-    code?: string;
-    message?: string;
-  };
+  error?:
+    | string
+    | {
+        code?: string;
+        message?: string;
+      };
 };
 
 export class ApiError extends Error {
@@ -64,12 +66,16 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorBody = body as ApiErrorBody | null;
+    // The Express API sends { error: "message" }; the documented contract
+    // is { error: { code, message } }. Accept both.
+    const detail =
+      typeof errorBody?.error === "object" ? errorBody.error : undefined;
+    const message =
+      typeof errorBody?.error === "string" ? errorBody.error : detail?.message;
     throw new ApiError(
-      errorBody?.error?.message ??
-        errorBody?.message ??
-        "The request could not be completed.",
+      message ?? errorBody?.message ?? "The request could not be completed.",
       response.status,
-      errorBody?.error?.code,
+      detail?.code,
     );
   }
 
