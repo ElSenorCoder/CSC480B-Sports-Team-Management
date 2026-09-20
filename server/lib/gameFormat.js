@@ -21,7 +21,8 @@ function toScheduleGame(row, myTeamId) {
     const time = `${pad(gameDate.getHours())}:${pad(gameDate.getMinutes())}`;
 
     return {
-        id: String(row.id),
+        // view_team_game exposes `id`, view_teams_with_games exposes `game_id`
+        id: String(row.id ?? row.game_id),
         opponent: isHome ? row.away_team_name : row.home_team_name,
         date,
         time,
