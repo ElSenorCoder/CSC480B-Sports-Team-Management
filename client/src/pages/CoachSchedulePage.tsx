@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -101,8 +102,8 @@ export function CoachSchedulePage() {
           <p>Add new games or remove games from the schedule.</p>
         </div>
         <div className="dashboard-heading-actions">
-          <span className="session-badge">{games.length} games</span>
-          <Link className="link-button" to={`/coach/team/${team.id}`}>
+          <span className="session-badge">{plural(games.length, "game")}</span>
+          <Link className="link-button muted-link" to={`/coach/team/${team.id}`}>
             Manage roster
           </Link>
         </div>

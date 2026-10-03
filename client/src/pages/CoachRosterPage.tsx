@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -113,8 +114,8 @@ export function CoachRosterPage() {
           <p>Approve or reject requests to join, or remove a current player.</p>
         </div>
         <div className="dashboard-heading-actions">
-          <span className="session-badge">{roster.length} players</span>
-          <Link className="link-button" to={`/coach/team/${team.id}/schedule`}>
+          <span className="session-badge">{plural(roster.length, "player")}</span>
+          <Link className="link-button muted-link" to={`/coach/team/${team.id}/schedule`}>
             Manage schedule
           </Link>
         </div>
@@ -128,7 +129,7 @@ export function CoachRosterPage() {
       ) : (
         <ul className="game-list">
           {requests.map((request) => (
-            <li key={request.id} className="game-row">
+            <li key={request.id} className="game-row request-row">
               <div>
                 <strong>{request.name}</strong>
                 <small>{request.email}</small>
@@ -137,6 +138,7 @@ export function CoachRosterPage() {
                 className="form-input"
                 type="text"
                 placeholder="Position"
+                aria-label={`Position for ${request.name}`}
                 style={{ maxWidth: "8rem" }}
                 value={positions[request.id] ?? ""}
                 onChange={(e) => setPositions((p) => ({ ...p, [request.id]: e.target.value }))}
@@ -147,6 +149,7 @@ export function CoachRosterPage() {
                 type="number"
                 min="0"
                 placeholder="Jersey #"
+                aria-label={`Jersey number for ${request.name}`}
                 style={{ maxWidth: "6rem" }}
                 value={jerseys[request.id] ?? ""}
                 onChange={(e) => setJerseys((j) => ({ ...j, [request.id]: e.target.value }))}

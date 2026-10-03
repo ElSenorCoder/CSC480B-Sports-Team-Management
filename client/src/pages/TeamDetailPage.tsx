@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getTeamById, leaveTeam, type Team, type Teammate } from "../lib/mockPlayerData";
@@ -56,8 +57,8 @@ export function TeamDetailPage() {
           <p>See who's on this team and open a teammate's profile.</p>
         </div>
         <div className="dashboard-heading-actions">
-          <span className="session-badge">{roster.length} teammates</span>
-          <Link className="link-button" to={`/team/${team.id}/schedule`}>
+          <span className="session-badge">{plural(roster.length, "teammate")}</span>
+          <Link className="link-button muted-link" to={`/team/${team.id}/schedule`}>
             View schedule
           </Link>
           <button className="link-button" type="button" onClick={handleLeaveTeam} disabled={leaving}>

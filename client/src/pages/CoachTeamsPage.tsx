@@ -1,3 +1,4 @@
+import { plural } from "../lib/plural";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMyManagedTeams, type ManagedTeam } from "../lib/mockPlayerData";
@@ -41,7 +42,7 @@ export function CoachTeamsPage() {
           <h1>My teams</h1>
           <p>Select a team to manage its roster and schedule.</p>
         </div>
-        <span className="session-badge">{teams.length} teams</span>
+        <span className="session-badge">{plural(teams.length, "team")}</span>
       </div>
 
       {teams.length === 0 ? (

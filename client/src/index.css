@@ -563,10 +563,10 @@ a { color: inherit; }
 @media (max-width: 900px) {
   .app-frame { grid-template-columns: 5rem minmax(0, 1fr); }
   .sidebar { align-items: center; padding-inline: 0.7rem; }
-  .sidebar .brand-lockup > span:last-child, .nav-label, .nav-item span, .logout-button { font-size: 0; }
+  .sidebar .brand-lockup > span:last-child, .nav-label { font-size: 0; }
   .sidebar .brand-lockup { justify-content: center; }
-  .nav-item { justify-content: center; width: 3rem; }
-  .logout-button { justify-content: center; width: 3rem; }
+  .nav-item, .logout-button { flex-direction: column; justify-content: center; gap: 0.2rem; width: 3.8rem; padding-inline: 0.2rem; font-size: 0.6rem; line-height: 1.15; text-align: center; }
+  .nav-item span { font-size: 0.6rem; }
   .session-panel { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 
@@ -696,6 +696,7 @@ a { color: inherit; }
   .primary-nav { display: contents; }
   .nav-item { width: 100%; min-height: 3.1rem; }
   .logout-button { display: flex; width: 100%; margin: 0; justify-content: center; }
+  .nav-item, .logout-button { padding-block: 0.35rem; }
   .nav-item[aria-current="page"] { box-shadow: inset 0 -3px var(--green); }
   .app-content { padding-bottom: 5.5rem; }
   .topbar { min-height: 4.4rem; }
@@ -969,4 +970,10 @@ a { color: inherit; }
   .action-row { justify-content: flex-start; }
   .dashboard-heading-actions { align-items: flex-start; }
   .tournament-submit { width: 100%; }
+}
+
+@media (max-width: 680px) {
+  .request-row { flex-wrap: wrap; }
+  .request-row > div { flex: 1 1 100%; }
+  .request-row .form-input { flex: 1 1 6rem; max-width: none !important; }
 }
